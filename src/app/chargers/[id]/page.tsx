@@ -13,6 +13,9 @@ import { POLICY_TEXT } from "@/lib/domain/cancellation";
 import { ACCESS_LABEL, PROPERTY_LABEL } from "@/lib/labels";
 import { formatDate, localDateString } from "@/lib/domain/time";
 import { formatINR } from "@/lib/money";
+import { config } from "@/lib/config";
+import { visitorId } from "@/lib/request";
+import { track } from "@/lib/services/analytics";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -30,6 +33,7 @@ export default async function ChargerPage({ params }: PageProps<"/chargers/[id]"
   const l = await getPublicListing(db, id);
   if (!l) notFound();
   const viewer = await getViewer();
+  await track(db, "listing_view", { visitorId: await visitorId(), userId: viewer?.userId, listingId: l.id, isDemo: config.demoMode || l.is_demo });
   const [{ rows: photos }, { rows: rules }, { rows: checks }, { rows: reviews }, { rows: connector }, vehicles] = await Promise.all([
     db.query<{ id: string; storage_path: string; caption: string }>(
       "select id, storage_path, caption from public.charger_photos where listing_id = $1 and kind = 'listing' order by sort_order",
@@ -78,21 +82,18 @@ export default async function ChargerPage({ params }: PageProps<"/chargers/[id]"
         <TrustBadge isDemo={l.is_demo} />
       </div>
 
-      <div className="mt-6 grid gap-2 overflow-hidden rounded-3xl sm:grid-cols-[2fr_1fr]">
+      <div className="mt-6 grid gap-2 overflow-hidden rounded-2xl sm:grid-cols-[2fr_1fr]">
         <div className="relative aspect-[16/10] bg-ink-900 sm:aspect-auto sm:h-[420px]">
           <ListingPhoto l={{ id: l.id, title: l.title, photo_path: photos[0]?.storage_path ?? null, property_type: l.property_type, rated_power_kw: l.rated_power_kw }} />
         </div>
-        <div className="hidden grid-rows-2 gap-2 sm:grid">
-          {[1, 2].map((i) =>
-            photos[i] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={`/api/files/${photos[i].storage_path}`} alt={photos[i].caption || l.title} className="h-full w-full object-cover" />
-            ) : (
-              <div key={i} className="grid place-items-center bg-ink-100 text-center text-xs text-ink-500">
-                {i === 1 ? "Host photos appear here once uploaded" : <ApproxMap lat={l.approx_lat} lng={l.approx_lng} />}
-              </div>
-            ),
-          )}
+        <div className={`hidden gap-2 sm:grid ${photos[1] ? "grid-rows-2" : ""}`}>
+          {photos[1] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/api/files/${photos[1].storage_path}`} alt={photos[1].caption || l.title} className="h-full w-full object-cover" />
+          ) : null}
+          <div className="relative min-h-48 bg-ink-100">
+            <ApproxMap lat={l.approx_lat} lng={l.approx_lng} />
+          </div>
         </div>
       </div>
 
@@ -104,7 +105,7 @@ export default async function ChargerPage({ params }: PageProps<"/chargers/[id]"
                 <h2 className="text-lg font-semibold">Hosted by {l.host_display_name}</h2>
                 <p className="text-sm text-ink-500">{PROPERTY_LABEL[l.host_type]} host</p>
               </div>
-              <div className="grid size-12 place-items-center rounded-2xl bg-ink-900 font-display text-lg font-semibold text-volt-300">
+              <div className="grid size-12 place-items-center rounded-xl bg-ink-900 font-display text-lg font-semibold text-volt-300">
                 {l.host_display_name[0]}
               </div>
             </div>
@@ -120,7 +121,7 @@ export default async function ChargerPage({ params }: PageProps<"/chargers/[id]"
                 { icon: ShieldCheck, k: "Make & model", v: `${l.charger_make} ${l.charger_model}` },
                 { icon: Timer, k: "Bookings", v: `${l.min_duration_minutes / 60}–${l.max_duration_minutes / 60} h, ${l.buffer_minutes} min buffer` },
               ].map((x) => (
-                <div key={x.k} className="flex gap-3 rounded-2xl border border-ink-100 bg-white p-4">
+                <div key={x.k} className="flex gap-3 rounded-xl border border-ink-100 bg-white p-4">
                   <x.icon className="mt-0.5 size-5 shrink-0 text-volt-600" aria-hidden />
                   <div><dt className="text-xs text-ink-500">{x.k}</dt><dd className="font-medium">{x.v}</dd></div>
                 </div>
@@ -165,7 +166,7 @@ export default async function ChargerPage({ params }: PageProps<"/chargers/[id]"
                 This is a fictional demo listing. The check results below are simulated to demonstrate the workflow and do not represent a real inspection.
               </p>
             ) : null}
-            <ul className="mt-4 divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-white">
+            <ul className="mt-4 divide-y divide-ink-100 rounded-xl border border-ink-100 bg-white">
               {checks.map((c) => (
                 <li key={c.check_type} className="flex items-start justify-between gap-4 p-4">
                   <div>
@@ -195,7 +196,7 @@ export default async function ChargerPage({ params }: PageProps<"/chargers/[id]"
             {reviews.length ? (
               <ul className="mt-4 space-y-4">
                 {reviews.map((r) => (
-                  <li key={r.id} className="rounded-2xl border border-ink-100 bg-white p-4">
+                  <li key={r.id} className="rounded-xl border border-ink-100 bg-white p-4">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-semibold">{r.author || "Driver"}</span>
                       <span className="text-ink-500">{"★".repeat(r.rating)}<span className="text-ink-200">{"★".repeat(5 - r.rating)}</span> · {formatDate(r.created_at)}</span>

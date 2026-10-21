@@ -4,6 +4,7 @@ import { Badge, Card, Field, Input, Textarea } from "@/components/ui";
 import { BookingStatusPill } from "@/components/domain";
 import { refundAction, resolveDisputeAction } from "../actions";
 import { getDb } from "@/lib/db";
+import { maybeSweep } from "@/lib/services/maintenance";
 import { formatINR } from "@/lib/money";
 import { formatDateTime } from "@/lib/domain/time";
 import type { BookingStatus } from "@/lib/domain/booking-state";
@@ -12,6 +13,7 @@ export const metadata = { title: "Admin · Bookings" };
 
 export default async function AdminBookings() {
   const db = await getDb();
+  await maybeSweep(db);
   const { rows } = await db.query<{
     id: string; code: string; status: BookingStatus; start_at: Date; amount_paise: number; title: string; driver: string; host: string;
     pay_status: string | null; provider: string | null; refunded: number; is_demo: boolean; dispute_note: string | null;
@@ -61,7 +63,7 @@ export default async function AdminBookings() {
 
       <section>
         <h2 className="mb-4 text-lg font-semibold">All bookings & payments</h2>
-        <div className="overflow-x-auto rounded-2xl border border-ink-100 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-ink-100 bg-white">
           <table className="w-full min-w-[960px] text-sm">
             <thead className="bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-500"><tr><th className="px-4 py-3">Code</th><th className="px-4 py-3">When</th><th className="px-4 py-3">Listing</th><th className="px-4 py-3">Driver / Host</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Payment</th><th className="px-4 py-3 text-right">Amount</th><th className="px-4 py-3">Refund</th></tr></thead>
             <tbody className="divide-y divide-ink-100">

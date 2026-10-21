@@ -31,7 +31,7 @@ export function ConfirmAction({
       <Button type="button" variant={triggerVariant} onClick={() => ref.current?.showModal()}>
         {trigger}
       </Button>
-      <dialog ref={ref} className="m-auto w-[min(92vw,440px)] rounded-2xl p-0 shadow-lift backdrop:bg-ink-950/50">
+      <dialog ref={ref} className="m-auto w-[min(92vw,440px)] rounded-xl p-0 shadow-lift backdrop:bg-ink-950/50">
         <form
           action={async (fd) => {
             await action(fd);

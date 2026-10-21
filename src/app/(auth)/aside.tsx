@@ -7,8 +7,7 @@ export function AuthAside() {
     { icon: Wallet, title: "Clear prices", body: "See the full price before you book. Refunds follow the policy shown at checkout." },
   ];
   return (
-    <div className="relative h-full overflow-hidden rounded-3xl bg-ink-900 p-10 text-white">
-      <div className="absolute -right-24 -top-24 size-80 rounded-full bg-volt-500/20 blur-3xl" />
+    <div className="relative h-full overflow-hidden rounded-2xl bg-ink-900 p-10 text-white">
       <h2 className="relative max-w-sm text-2xl font-semibold">Charging at someone else&apos;s place, done properly.</h2>
       <ul className="relative mt-10 space-y-7">
         {items.map((i) => (

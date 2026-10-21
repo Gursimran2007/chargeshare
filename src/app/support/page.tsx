@@ -30,7 +30,7 @@ export default async function SupportPage({ searchParams }: PageProps<"/support"
   return (
     <Container className="max-w-5xl py-8 sm:py-12">
       <PageHeader title="Help & support" subtitle="Get help with a booking, payment, refund or your account." />
-      <div className="mb-6 flex gap-3 rounded-2xl border border-stop-600/20 bg-stop-100 p-4 text-sm text-stop-600">
+      <div className="mb-6 flex gap-3 rounded-xl border border-stop-600/20 bg-stop-100 p-4 text-sm text-stop-600">
         <ShieldAlert className="size-5 shrink-0" aria-hidden />
         <div>
           <strong>Emergency?</strong> If there is fire, smoke, sparking or an injury, move away from the charger and call <a href="tel:112" className="font-bold underline">112</a>. Then{" "}

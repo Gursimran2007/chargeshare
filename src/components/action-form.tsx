@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useActionState, useContext, useEffect, useRef, type ComponentProps, type ReactNode } from "react";
-import { FormMessage, SubmitButton, useActionToast } from "./form-bits";
+import { FormMessage, SubmitButton, withToast } from "./form-bits";
 import type { ActionState } from "@/lib/actions";
 import { Button, Field, cn } from "./ui";
 
@@ -35,10 +35,9 @@ export function ActionForm({
   resetOnSuccess?: boolean;
   confirm?: { title: string; body: ReactNode; label: string };
 }) {
-  const [state, formAction] = useActionState(action, null);
+  const [state, formAction] = useActionState(withToast(action), null);
   const ref = useRef<HTMLFormElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  useActionToast(state);
   useEffect(() => {
     if (state?.ok && resetOnSuccess) ref.current?.reset();
     if (state) dialog.current?.close();
@@ -56,7 +55,7 @@ export function ActionForm({
         <Button type="button" variant={variant} onClick={() => dialog.current?.showModal()} className={className}>
           {submit}
         </Button>
-        <dialog ref={dialog} className="m-auto w-[min(92vw,460px)] rounded-2xl p-0 shadow-lift backdrop:bg-ink-950/50">
+        <dialog ref={dialog} className="m-auto w-[min(92vw,460px)] rounded-xl p-0 shadow-lift backdrop:bg-ink-950/50">
           <form ref={ref} action={formAction} className="space-y-4 p-6">
             <h2 className="text-lg font-semibold">{confirm.title}</h2>
             <div className="text-sm text-ink-600">{confirm.body}</div>

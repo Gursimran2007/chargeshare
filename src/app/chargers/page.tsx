@@ -8,6 +8,8 @@ import { getViewer } from "@/lib/auth";
 import { searchListings, type SearchFilters } from "@/lib/services/listings";
 import { CITY_CENTER, findLocality, LOCALITIES } from "@/lib/geo";
 import { config } from "@/lib/config";
+import { visitorId } from "@/lib/request";
+import { track } from "@/lib/services/analytics";
 
 export const metadata = { title: "Find a charger" };
 
@@ -47,6 +49,12 @@ export default async function ChargersPage({ searchParams }: PageProps<"/charger
       : null,
   };
   const listings = await searchListings(db, filters);
+  await track(db, "search", {
+    visitorId: await visitorId(),
+    userId: viewer?.userId,
+    props: { q, locality: locality?.name ?? null, results: listings.length, filtered: !!(filters.connector || filters.minKw || filters.maxPricePerHour || filters.access || filters.instantOnly || filters.vehicle || filters.availableAt) },
+    isDemo: config.demoMode,
+  });
   return (
     <Container className="py-6 sm:py-8">
       <datalist id="localities">

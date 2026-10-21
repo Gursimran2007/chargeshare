@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db";
 import { getViewer } from "@/lib/auth";
 import { failure, type ActionState } from "@/lib/actions";
-import { providerByName, activeProvider } from "@/lib/payments";
+import { demoProvider, providerByName } from "@/lib/payments";
 import { AppError } from "@/lib/errors";
 import { rupeesToPaise } from "@/lib/money";
 import { approveListing, moderateListing, reviewVerification, type Decision } from "@/lib/services/verification";
@@ -29,7 +29,7 @@ function done(message: string, ...paths: string[]): ActionState {
 async function providerFor(bookingId: string) {
   const db = await getDb();
   const { rows } = await db.query<{ provider: string }>("select provider from public.payments where booking_id = $1 and status <> 'failed' order by created_at desc limit 1", [bookingId]);
-  return rows[0] ? providerByName(rows[0].provider) : activeProvider();
+  return rows[0] ? providerByName(rows[0].provider) : demoProvider();
 }
 
 export async function reviewCheckAction(_: ActionState, form: FormData): Promise<ActionState> {

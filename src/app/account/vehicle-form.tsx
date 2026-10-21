@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { vehicleAction } from "./actions";
 import { Field, Input, Select } from "@/components/ui";
-import { FormMessage, SubmitButton, useActionToast } from "@/components/form-bits";
+import { FormMessage, SubmitButton, withToast } from "@/components/form-bits";
 
 interface Model { id: string; make: string; model: string; battery_kwh: number | null; max_ac_kw: number | null; connectors: string[]; notes: string }
 interface Connector { code: string; label: string; listable: boolean }
@@ -11,7 +11,7 @@ interface Connector { code: string; label: string; listable: boolean }
 export function VehicleForm({ models, connectors }: { models: Model[]; connectors: Connector[] }) {
   const [m, setM] = useState<Model | null>(null);
   const [key, setKey] = useState(0);
-  const [state, action] = useActionState(async (prev: Parameters<typeof vehicleAction>[0], fd: FormData) => {
+  const [state, action] = useActionState(withToast(async (prev: Parameters<typeof vehicleAction>[0], fd: FormData) => {
     const r = await vehicleAction(prev, fd);
     if (r?.ok) {
       // Remount the form to clear it after a successful add.
@@ -19,8 +19,7 @@ export function VehicleForm({ models, connectors }: { models: Model[]; connector
       setKey((k) => k + 1);
     }
     return r;
-  }, null);
-  useActionToast(state);
+  }), null);
   const e = state?.fieldErrors ?? {};
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2" key={key}>

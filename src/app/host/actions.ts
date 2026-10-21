@@ -23,6 +23,7 @@ import {
 } from "@/lib/services/listings";
 import { submitVerification, type CheckType } from "@/lib/services/verification";
 import { replyToReview } from "@/lib/services/bookings";
+import { rateLimit } from "@/lib/services/rate-limit";
 
 async function viewer() {
   const v = await getViewer();
@@ -61,6 +62,7 @@ export async function verificationAction(_: ActionState, form: FormData): Promis
     const checkType = String(form.get("checkType")) as CheckType;
     const listingId = form.get("listingId") ? String(form.get("listingId")) : null;
     const db = await getDb();
+    await rateLimit(db, `upload:${v.userId}`, 40, 60 * 60);
     if (listingId) await assertHostOwnsListing(db, v, listingId);
     const files = form.getAll("evidence").filter((f): f is File => f instanceof File && f.size > 0).slice(0, 4);
     const paths: string[] = [];
@@ -129,6 +131,7 @@ export async function photoAction(_: ActionState, form: FormData): Promise<Actio
   try {
     const v = await viewer();
     const db = await getDb();
+    await rateLimit(db, `upload:${v.userId}`, 40, 60 * 60);
     await assertHostOwnsListing(db, v, id);
     const kind = form.get("kind") === "installation" ? "installation" : "listing";
     const files = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0).slice(0, 6);

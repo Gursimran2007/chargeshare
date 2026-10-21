@@ -21,7 +21,7 @@ export default async function OutboxPage() {
       {rows.length ? (
         <ul className="space-y-3">
           {rows.map((m) => (
-            <li key={m.id} className="rounded-2xl border border-ink-100 bg-white p-4">
+            <li key={m.id} className="rounded-xl border border-ink-100 bg-white p-4">
               <div className="flex flex-wrap justify-between gap-2 text-xs text-ink-500"><span>To: {m.email}</span><span>{formatDateTime(m.created_at)}</span></div>
               <div className="mt-1 font-semibold">{m.title}</div>
               <p className="text-sm text-ink-600">{m.body}</p>

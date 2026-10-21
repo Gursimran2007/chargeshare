@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
       <h1 className="text-3xl font-semibold">Reset your password</h1>
       <p className="mt-2 text-sm text-ink-500">We&apos;ll email you a link that works for 30 minutes.</p>
       {state?.ok ? (
-        <div className="mt-8 rounded-2xl border border-go-600/20 bg-go-100 p-4 text-sm text-go-600">
+        <div className="mt-8 rounded-xl border border-go-600/20 bg-go-100 p-4 text-sm text-go-600">
           {state.message}
           <p className="mt-2 text-ink-600">
             In demo mode, emails are delivered to the <Link href="/dev/outbox" className="font-semibold underline">demo outbox</Link>.

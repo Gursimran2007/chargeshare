@@ -32,6 +32,7 @@ export function SiteFooter({ demo }: { demo: boolean }) {
         <div>
           <h3 className="text-sm font-semibold text-white">Company</h3>
           <ul className="mt-3 space-y-2 text-sm">
+            <li><Link href="/how-it-works" className="hover:text-white">How ChargeShare works</Link></li>
             <li><Link href="/legal/terms" className="hover:text-white">Terms of service</Link></li>
             <li><Link href="/legal/privacy" className="hover:text-white">Privacy policy</Link></li>
             <li><a href={`mailto:${brand.supportEmail}`} className="hover:text-white">{brand.supportEmail}</a></li>

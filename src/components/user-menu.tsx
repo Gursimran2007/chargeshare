@@ -40,7 +40,7 @@ export function UserMenu({ name, email, isHost, isAdmin }: { name: string; email
         <ChevronDown className="size-4 text-ink-500" aria-hidden />
       </button>
       {open ? (
-        <div role="menu" className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-lift">
+        <div role="menu" className="absolute right-0 mt-2 w-60 overflow-hidden rounded-xl border border-ink-100 bg-white shadow-lift">
           <div className="border-b border-ink-100 px-4 py-3">
             <div className="truncate text-sm font-semibold">{name}</div>
             <div className="truncate text-xs text-ink-500">{email}</div>

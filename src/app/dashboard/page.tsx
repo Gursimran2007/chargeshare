@@ -3,6 +3,7 @@ import { CalendarX2, Car, ChevronRight } from "lucide-react";
 import { Container, EmptyState, LinkButton, PageHeader, Card } from "@/components/ui";
 import { BookingStatusPill, DemoBadge, ListingPhoto } from "@/components/domain";
 import { getDb } from "@/lib/db";
+import { maybeSweep } from "@/lib/services/maintenance";
 import { requireViewer } from "@/lib/auth";
 import { formatINR } from "@/lib/money";
 import { formatDateTime, formatTime } from "@/lib/domain/time";
@@ -18,7 +19,7 @@ interface Row {
 function BookingRow({ b }: { b: Row }) {
   return (
     <li>
-      <Link href={b.status === "pending_payment" ? `/checkout/${b.id}` : `/bookings/${b.id}`} className="flex items-center gap-4 rounded-2xl border border-ink-100 bg-white p-3 shadow-card transition hover:shadow-lift sm:p-4">
+      <Link href={b.status === "pending_payment" ? `/checkout/${b.id}` : `/bookings/${b.id}`} className="flex items-center gap-4 rounded-xl border border-ink-100 bg-white p-3 shadow-card transition hover:shadow-lift sm:p-4">
         <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-ink-900 sm:size-20">
           <ListingPhoto l={{ id: b.listing_id, title: b.title, photo_path: null, property_type: b.property_type, rated_power_kw: b.rated_power_kw }} />
         </div>
@@ -43,6 +44,7 @@ function BookingRow({ b }: { b: Row }) {
 export default async function DashboardPage() {
   const viewer = await requireViewer("/dashboard");
   const db = await getDb();
+  await maybeSweep(db);
   const { rows } = await db.query<Row>(
     `select b.id, b.code, b.status, b.start_at, b.end_at, b.amount_paise, b.is_demo, b.listing_id,
             l.title, l.locality, l.property_type, l.rated_power_kw
@@ -66,7 +68,7 @@ export default async function DashboardPage() {
         </Card>
       ) : null}
       {actionNeeded.length ? (
-        <div className="mb-6 rounded-2xl border border-warn-600/20 bg-warn-100/60 p-4 text-sm">
+        <div className="mb-6 rounded-xl border border-warn-600/20 bg-warn-100/60 p-4 text-sm">
           <strong>{actionNeeded.length} booking{actionNeeded.length > 1 ? "s" : ""} awaiting payment.</strong> Unpaid holds are released automatically.
         </div>
       ) : null}

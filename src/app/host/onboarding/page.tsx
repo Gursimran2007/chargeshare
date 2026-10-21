@@ -119,7 +119,7 @@ export default async function HostOnboardingPage() {
         </Card>
 
         {host ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-ink-900 p-5 text-white">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-ink-900 p-5 text-white">
             <div>
               <div className="font-semibold">Ready to list a charger?</div>
               <div className="text-sm text-ink-300">Create a draft now; it goes live only after all checks are approved.</div>

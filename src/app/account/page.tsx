@@ -34,7 +34,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
           {vehicles.length ? (
             <ul className="mb-6 grid gap-3 sm:grid-cols-2">
               {vehicles.map((v) => (
-                <li key={v.id} className="rounded-2xl border border-ink-100 p-4">
+                <li key={v.id} className="rounded-xl border border-ink-100 p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="font-semibold">{v.make} {v.model}</div>

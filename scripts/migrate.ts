@@ -1,8 +1,9 @@
 /**
- * Applies supabase/migrations/*.sql to the database in DATABASE_URL
- * (e.g. your Supabase project's direct connection string). Idempotent.
+ * Applies supabase/migrations/*.sql to the database in DATABASE_URL. Idempotent.
  *   DATABASE_URL=postgres://... npm run db:migrate
- * Alternatively run `supabase db push` with the Supabase CLI.
+ * - Supabase: run as-is (or use `supabase db push`).
+ * - Plain Postgres with AUTH_PROVIDER=local: the local auth shim (roles, auth schema)
+ *   is applied first, because Supabase's auth schema does not exist there.
  */
 import { createPool, migrate } from "../src/lib/db/core";
 
@@ -12,6 +13,6 @@ if (!url) {
   process.exit(1);
 }
 const db = await createPool(url);
-await migrate(db, { withShim: false });
+await migrate(db, { withShim: process.env.AUTH_PROVIDER === "local" });
 console.log("Migrations applied.");
 await db.close();

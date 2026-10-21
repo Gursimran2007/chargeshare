@@ -19,6 +19,9 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
           <Link href={viewer?.isHost ? "/host" : "/host/onboarding"} className="rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
             {viewer?.isHost ? "Host dashboard" : "Become a host"}
           </Link>
+          <Link href="/how-it-works" className="rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
+            How it works
+          </Link>
           <Link href="/safety" className="rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
             Safety
           </Link>

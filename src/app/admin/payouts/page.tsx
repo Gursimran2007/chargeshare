@@ -21,7 +21,7 @@ export default async function AdminPayouts() {
         <h1 className="text-2xl font-semibold">Payouts</h1>
         <p className="mt-1 text-sm text-ink-500">Payouts are executed manually (bank/UPI transfer) and then recorded here with the transfer reference. Automated split settlements require payment-provider approval.</p>
       </div>
-      <div className="overflow-x-auto rounded-2xl border border-ink-100 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-ink-100 bg-white">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-500"><tr><th className="px-4 py-3">Host</th><th className="px-4 py-3 text-right">Net earned</th><th className="px-4 py-3 text-right">Pending</th><th className="px-4 py-3 text-right">Held</th><th className="px-4 py-3 text-right">Paid out</th><th className="px-4 py-3 text-right">Available</th><th className="px-4 py-3" /></tr></thead>
           <tbody className="divide-y divide-ink-100">

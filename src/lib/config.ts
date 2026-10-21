@@ -29,6 +29,7 @@ export const config = {
   },
   payments: {
     provider: (process.env.PAYMENT_PROVIDER ?? "demo") as "demo" | "razorpay",
+    allowDemoPayments: bool(process.env.ALLOW_DEMO_PAYMENTS, false),
     demoSecret: process.env.DEMO_PAYMENT_SECRET ?? "demo-payment-secret",
     demoWebhookSecret: process.env.DEMO_WEBHOOK_SECRET ?? "demo-webhook-secret",
     razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? "",
@@ -37,11 +38,23 @@ export const config = {
   },
 };
 
+/** Environment variables used by the payment-mode decision. */
+export function paymentEnv() {
+  return { ...config.payments, demoMode: config.demoMode };
+}
+
 export function assertConfig() {
   if (!config.sessionSecret || config.sessionSecret.length < 16) {
     throw new Error("SESSION_SECRET must be set (at least 16 characters).");
   }
-  if (config.payments.provider === "razorpay" && config.demoMode) {
-    throw new Error("Live payments cannot run in demo mode. Set DATABASE_URL and DEMO_MODE=false.");
+  if (!["demo", "razorpay"].includes(config.payments.provider)) {
+    throw new Error(`PAYMENT_PROVIDER must be "demo" or "razorpay" (got "${config.payments.provider}").`);
   }
+  if (!["local", "supabase"].includes(config.authProvider)) {
+    throw new Error(`AUTH_PROVIDER must be "local" or "supabase" (got "${config.authProvider}").`);
+  }
+  if (config.authProvider === "supabase" && (!config.supabase.url || !config.supabase.anonKey)) {
+    throw new Error("AUTH_PROVIDER=supabase needs NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+  }
+  // Payment misconfiguration does not stop the app booting: checkout explains it instead.
 }

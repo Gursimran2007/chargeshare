@@ -20,7 +20,7 @@ export default async function AdminUsers() {
   return (
     <div>
       <h1 className="mb-4 text-2xl font-semibold">Users & hosts</h1>
-      <div className="overflow-x-auto rounded-2xl border border-ink-100 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-ink-100 bg-white">
         <table className="w-full min-w-[820px] text-sm">
           <thead className="bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-500"><tr><th className="px-4 py-3">User</th><th className="px-4 py-3">Roles</th><th className="px-4 py-3">Joined</th><th className="px-4 py-3">Bookings</th><th className="px-4 py-3">Listings</th><th className="px-4 py-3">Status</th><th className="px-4 py-3" /></tr></thead>
           <tbody className="divide-y divide-ink-100">

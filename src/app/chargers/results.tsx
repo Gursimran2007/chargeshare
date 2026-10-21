@@ -40,7 +40,7 @@ export function Results({
         </div>
       </div>
       <div className={cn("lg:sticky lg:top-24 lg:block lg:h-[calc(100vh-8rem)]", view === "list" ? "hidden" : "block h-[70vh]")}>
-        <div className="relative h-full overflow-hidden rounded-2xl border border-ink-100">
+        <div className="relative h-full overflow-hidden rounded-xl border border-ink-100">
           <MapView key={pins.map((p) => p.id).join()} pins={pins} center={center} activeId={active} onHover={setActive} className="h-full w-full" />
           <div className="pointer-events-none absolute left-3 top-3 z-[400] inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1 text-xs font-medium text-ink-600 shadow">
             <Info className="size-3.5" aria-hidden /> Pins show approximate areas

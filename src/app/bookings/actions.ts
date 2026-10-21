@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { getViewer } from "@/lib/auth";
 import { failure, type ActionState } from "@/lib/actions";
-import { activeProvider, providerByName } from "@/lib/payments";
-import { config } from "@/lib/config";
+import { activeProvider, currentPaymentMode, providerByName } from "@/lib/payments";
 import { AppError } from "@/lib/errors";
 import { reviewSchema, fieldErrors } from "@/lib/validation";
 import {
@@ -20,6 +19,7 @@ import {
 } from "@/lib/services/bookings";
 import { capturePayment, markPaymentFailed, startPayment } from "@/lib/services/payments";
 import { demoProvider } from "@/lib/payments";
+import { rateLimit } from "@/lib/services/rate-limit";
 
 async function viewerOrThrow() {
   const v = await getViewer();
@@ -39,7 +39,8 @@ async function bookingProvider(bookingId: string) {
     "select provider from public.payments where booking_id = $1 and status in ('captured','partially_refunded') limit 1",
     [bookingId],
   );
-  return rows[0] ? providerByName(rows[0].provider) : activeProvider();
+  // Without a captured payment no refund is possible, so the provider is never called.
+  return rows[0] ? providerByName(rows[0].provider) : demoProvider();
 }
 
 export async function cancelAction(_: ActionState, form: FormData): Promise<ActionState> {
@@ -93,7 +94,10 @@ export async function reviewAction(_: ActionState, form: FormData): Promise<Acti
 export async function messageAction(_: ActionState, form: FormData): Promise<ActionState> {
   const id = String(form.get("bookingId"));
   try {
-    const masked = await sendMessage(await getDb(), await viewerOrThrow(), id, String(form.get("body") ?? ""));
+    const v = await viewerOrThrow();
+    const db = await getDb();
+    await rateLimit(db, `msg:${v.userId}`, 40, 10 * 60);
+    const masked = await sendMessage(db, v, id, String(form.get("body") ?? ""));
     refresh(id);
     return { ok: true, message: masked.includes("[contact details hidden]") ? "Sent. Phone numbers and emails are hidden to keep contact on ChargeShare." : undefined };
   } catch (e) {
@@ -146,7 +150,8 @@ export async function startCheckoutAction(bookingId: string) {
 
 /** DEMO ONLY: simulates the provider's checkout outcome, then runs the real verification path. */
 export async function demoPayAction(bookingId: string, orderId: string, outcome: "success" | "failure") {
-  if (config.payments.provider !== "demo") return { ok: false, message: "Demo payments are disabled." };
+  const mode = currentPaymentMode();
+  if (!mode.ok || mode.provider !== "demo") return { ok: false, message: "Demo payments are disabled in this environment." };
   try {
     const viewer = await viewerOrThrow();
     const db = await getDb();

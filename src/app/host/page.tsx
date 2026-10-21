@@ -5,6 +5,7 @@ import { Card, Container, EmptyState, LinkButton, PageHeader, Stat } from "@/com
 import { ListingPhoto, ListingStatusPill, Rating } from "@/components/domain";
 import { HostNav } from "./host-nav";
 import { getDb } from "@/lib/db";
+import { maybeSweep } from "@/lib/services/maintenance";
 import { requireRolePage } from "@/lib/auth";
 import { hostEarnings } from "@/lib/services/finance";
 import { formatINR } from "@/lib/money";
@@ -16,6 +17,7 @@ export const metadata = { title: "Host dashboard" };
 export default async function HostDashboard() {
   const viewer = await requireRolePage("host", "/host");
   const db = await getDb();
+  await maybeSweep(db);
   const { rows: hp } = await db.query<{ display_name: string }>("select display_name from public.host_profiles where user_id = $1", [viewer.userId]);
   if (!hp[0]) redirect("/host/onboarding");
   const [{ rows: listings }, { rows: requests }, { rows: upcoming }, earnings] = await Promise.all([
@@ -71,7 +73,7 @@ export default async function HostDashboard() {
             <ul className="space-y-3">
               {listings.map((l) => (
                 <li key={l.id}>
-                  <Link href={`/host/listings/${l.id}`} className="flex items-center gap-4 rounded-2xl border border-ink-100 bg-white p-3 shadow-card hover:shadow-lift">
+                  <Link href={`/host/listings/${l.id}`} className="flex items-center gap-4 rounded-xl border border-ink-100 bg-white p-3 shadow-card hover:shadow-lift">
                     <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-ink-900"><ListingPhoto l={l} /></div>
                     <div className="min-w-0 flex-1">
                       <ListingStatusPill status={l.status} />

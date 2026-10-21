@@ -31,8 +31,7 @@ function HeroVisual() {
   ];
   return (
     <div className="relative mx-auto w-full max-w-lg">
-      <div className="absolute -inset-6 rounded-[40px] bg-volt-500/20 blur-3xl" aria-hidden />
-      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-ink-800 shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-800 shadow-2xl">
         <svg viewBox="0 0 440 400" className="block w-full" role="img" aria-label="Illustrated map with charger pins">
           <rect width="440" height="400" fill="#0d1d38" />
           <path d="M300 0c-20 60 30 90 10 150s40 110 20 170 30 60 30 80h80V0Z" fill="#0f2c4a" />
@@ -49,7 +48,6 @@ function HeroVisual() {
           </g>
           {pins.map((p, i) => (
             <g key={i} transform={`translate(${p.x} ${p.y})`}>
-              {i === 1 ? <circle r="22" fill="#2fd3c9" opacity="0.18" /> : null}
               <rect x="-30" y="-14" width="60" height="28" rx="14" fill={i === 1 ? "#0fb5ae" : "#ffffff"} />
               <circle cx="-17" cy="0" r="4" fill={i === 1 ? "#ffffff" : "#0fb5ae"} />
               <text x="6" y="5" textAnchor="middle" fontSize="13" fontWeight="700" fill={i === 1 ? "#050d1c" : "#0a1730"} fontFamily="system-ui, sans-serif">
@@ -59,7 +57,7 @@ function HeroVisual() {
           ))}
           <circle cx="210" cy="190" r="7" fill="#22c55e" stroke="#fff" strokeWidth="3" />
         </svg>
-        <div className="absolute inset-x-4 bottom-4 rounded-2xl bg-white p-4 shadow-lift">
+        <div className="absolute inset-x-4 bottom-4 rounded-xl bg-white p-4 shadow-lift">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-volt-600">Example slot</div>
@@ -118,14 +116,10 @@ export default async function Home() {
   return (
     <>
       <section className="relative overflow-hidden bg-ink-950 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(60%_60%_at_80%_20%,rgba(15,181,174,0.22),transparent),radial-gradient(40%_50%_at_10%_90%,rgba(34,197,94,0.12),transparent)]" aria-hidden />
         <Container className="relative grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.05fr_1fr] lg:py-24">
           <div>
             <Badge tone="outline" className="border-white/15 bg-white/5 text-ink-200">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-volt-400 opacity-60" />
-                <span className="relative inline-flex size-2 rounded-full bg-volt-400" />
-              </span>
+              <span className="inline-flex size-2 rounded-full bg-volt-400" />
               Preparing to launch in {brand.city}
             </Badge>
             <h1 className="mt-5 text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-6xl">
@@ -134,7 +128,7 @@ export default async function Home() {
             <p className="mt-5 max-w-xl text-lg text-ink-300">
               Discover and book verified EV chargers near homes, workplaces, and destinations. Already own a charger? Put it to work and earn from available charging time.
             </p>
-            <form action="/chargers" className="mt-8 flex max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 sm:flex-row">
+            <form action="/chargers" className="mt-8 flex max-w-xl flex-col gap-2 rounded-xl bg-white p-2 sm:flex-row">
               <label htmlFor="hero-q" className="sr-only">Area or locality</label>
               <div className="flex flex-1 items-center gap-2 px-3">
                 <Search className="size-5 text-ink-400" aria-hidden />
@@ -149,6 +143,7 @@ export default async function Home() {
                 Become a host <ArrowRight className="size-4" aria-hidden />
               </Link>
               <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-4 text-volt-400" aria-hidden /> Five checks before any charger goes live</span>
+              <Link href="/how-it-works" className="inline-flex items-center gap-1 hover:text-white">How it works</Link>
             </div>
           </div>
           <HeroVisual />
@@ -167,7 +162,7 @@ export default async function Home() {
               { icon: CalendarClock, t: "Reserve your slot", b: "Pick a time and duration. The full price, and how much charge to expect, is shown upfront." },
               { icon: Plug, t: "Arrive and charge", b: "The exact address and access instructions unlock once your booking is confirmed." },
             ].map((s, i) => (
-              <li key={s.t} className="relative rounded-2xl border border-ink-100 bg-white p-6 shadow-card">
+              <li key={s.t} className="relative rounded-xl border border-ink-100 bg-white p-6 shadow-card">
                 <div className="flex items-center gap-3">
                   <span className="grid size-11 place-items-center rounded-xl bg-ink-900 text-volt-300"><s.icon className="size-5" aria-hidden /></span>
                   <span className="font-display text-sm font-semibold text-ink-400">0{i + 1}</span>
@@ -182,7 +177,7 @@ export default async function Home() {
 
       <section className="bg-ink-50 py-16 sm:py-20">
         <Container className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-8 shadow-card">
+          <div className="rounded-2xl bg-white p-8 shadow-card">
             <Badge tone="volt">For drivers</Badge>
             <h2 className="mt-4 text-2xl font-semibold">Charge where you&apos;re already going</h2>
             <ul className="mt-6 space-y-4">
@@ -199,7 +194,7 @@ export default async function Home() {
             </ul>
             <LinkButton href="/chargers" className="mt-8">Find a charger</LinkButton>
           </div>
-          <div className="rounded-3xl bg-ink-900 p-8 text-white shadow-card">
+          <div className="rounded-2xl bg-ink-900 p-8 text-white shadow-card">
             <Badge tone="outline" className="border-white/15 bg-white/5 text-volt-300">For hosts</Badge>
             <h2 className="mt-4 text-2xl font-semibold">Put an idle charger to work</h2>
             <ul className="mt-6 space-y-4">
@@ -262,7 +257,7 @@ export default async function Home() {
               { icon: ClipboardCheck, t: "Installation", b: "Fixed EVSE on a dedicated circuit, with installer evidence." },
               { icon: BadgeCheck, t: "Electrical safety", b: "Inspection report from a licensed electrical contractor." },
             ].map((c) => (
-              <li key={c.t} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <li key={c.t} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
                 <c.icon className="size-5 text-volt-400" aria-hidden />
                 <div className="mt-3 font-semibold">{c.t}</div>
                 <div className="mt-1 text-sm text-ink-400">{c.b}</div>
@@ -280,7 +275,7 @@ export default async function Home() {
               Something else? Email <a className="font-medium text-volt-700 underline" href={`mailto:${brand.supportEmail}`}>{brand.supportEmail}</a>.
             </p>
           </div>
-          <div className="divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-white">
+          <div className="divide-y divide-ink-100 rounded-xl border border-ink-100 bg-white">
             {FAQ.map((f) => (
               <details key={f.q} className="group p-5 [&_summary::-webkit-details-marker]:hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-ink-900">

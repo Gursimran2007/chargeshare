@@ -128,6 +128,9 @@ export interface PlatformMetrics {
   payoutLiabilityPaise: number;
   utilisation: number | null;
   utilisationNote: string;
+  funnel: { searchVisitors: number; listingVisitors: number; bookingVisitors: number; searchToListing: number | null; listingToBooking: number | null };
+  hostResponseMedianMinutes: number | null;
+  bookingCompletionRate: number | null;
   demoShare: { bookings: number; listings: number };
 }
 
@@ -174,6 +177,26 @@ export async function platformMetrics(q: Queryable): Promise<PlatformMetrics> {
   );
   const u = util[0];
   const enough = u.sessions >= 10;
+  // Funnel over the last 30 days, by distinct first-party visitor id.
+  const { rows: f } = await q.query<{ s: number; l: number; b: number }>(
+    `select count(distinct visitor_id) filter (where event = 'search')::int as s,
+            count(distinct visitor_id) filter (where event = 'listing_view')::int as l,
+            count(distinct visitor_id) filter (where event = 'booking_request')::int as b
+       from public.analytics_events where created_at > now() - interval '30 days' and visitor_id is not null`,
+  );
+  const { rows: resp } = await q.query<{ m: number | null }>(
+    `select percentile_cont(0.5) within group (order by extract(epoch from (r.created_at - b.created_at)) / 60)::float as m
+       from public.bookings b
+       join lateral (select e.created_at from public.booking_events e
+                      where e.booking_id = b.id and e.actor_role = 'host' and e.to_status in ('pending_payment', 'declined')
+                      order by e.created_at limit 1) r on true`,
+  );
+  const { rows: comp } = await q.query<{ done: number; due: number }>(
+    `select count(*) filter (where b.status in ('completed', 'refunded'))::int as done, count(*)::int as due
+       from public.bookings b
+      where b.end_at < now() and exists (select 1 from public.booking_events e where e.booking_id = b.id and e.to_status = 'confirmed')
+        and b.status <> 'cancelled'`,
+  );
   const demoBookings = await one("select count(*)::int as n from public.bookings where is_demo");
   const demoListings = await one("select count(*)::int as n from public.charger_listings where is_demo");
   return {
@@ -201,5 +224,14 @@ export async function platformMetrics(q: Queryable): Promise<PlatformMetrics> {
       ? "Completed charger-hours ÷ offered charger-hours, last 30 days."
       : `Not enough completed sessions in the last 30 days (${u.sessions} of 10 needed) to report utilisation.`,
     demoShare: { bookings: demoBookings, listings: demoListings },
+    funnel: {
+      searchVisitors: f[0].s,
+      listingVisitors: f[0].l,
+      bookingVisitors: f[0].b,
+      searchToListing: ratio(f[0].l, f[0].s),
+      listingToBooking: ratio(f[0].b, f[0].l),
+    },
+    hostResponseMedianMinutes: resp[0].m === null ? null : Math.round(resp[0].m),
+    bookingCompletionRate: ratio(comp[0].done, comp[0].due),
   };
 }

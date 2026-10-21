@@ -87,13 +87,13 @@ export default async function ManageListingPage({ params }: PageProps<"/host/lis
       />
       <HostNav />
       {l.rejection_reason && ["rejected", "changes_requested"].includes(l.status) ? (
-        <div className="mb-6 rounded-2xl border border-warn-600/20 bg-warn-100/60 p-4 text-sm"><strong>Reviewer note:</strong> {l.rejection_reason}</div>
+        <div className="mb-6 rounded-xl border border-warn-600/20 bg-warn-100/60 p-4 text-sm"><strong>Reviewer note:</strong> {l.rejection_reason}</div>
       ) : null}
       {l.status === "suspended" ? (
-        <div className="mb-6 rounded-2xl border border-stop-600/20 bg-stop-100 p-4 text-sm text-stop-600"><strong>Suspended:</strong> {l.suspended_reason ?? "Contact support."}</div>
+        <div className="mb-6 rounded-xl border border-stop-600/20 bg-stop-100 p-4 text-sm text-stop-600"><strong>Suspended:</strong> {l.suspended_reason ?? "Contact support."}</div>
       ) : null}
       {canSubmit && outstanding ? (
-        <div className="mb-6 rounded-2xl border border-ink-100 bg-white p-4 text-sm">
+        <div className="mb-6 rounded-xl border border-ink-100 bg-white p-4 text-sm">
           <strong>{outstanding} verification item{outstanding > 1 ? "s" : ""} still needed</strong> before you can submit this listing for review.
         </div>
       ) : null}
@@ -105,7 +105,7 @@ export default async function ManageListingPage({ params }: PageProps<"/host/lis
             <p className="mt-1 text-sm text-ink-500">Each check is reviewed separately by ChargeShare. You cannot approve your own checks. The listing goes live only when all five are verified.</p>
             <ul className="mt-4 space-y-3">
               {checks.map((c) => (
-                <li key={c.id} className="rounded-2xl border border-ink-100 p-4">
+                <li key={c.id} className="rounded-xl border border-ink-100 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <div className="font-semibold">{CHECK_INFO[c.check_type].title}</div>

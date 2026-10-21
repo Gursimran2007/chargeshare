@@ -9,7 +9,7 @@ export default function Loading() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="grid gap-4 sm:grid-cols-2">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="overflow-hidden rounded-2xl border border-ink-100 bg-white">
+            <div key={i} className="overflow-hidden rounded-xl border border-ink-100 bg-white">
               <Skeleton className="aspect-[16/9] rounded-none" />
               <div className="space-y-2 p-4">
                 <Skeleton className="h-4 w-3/4" />

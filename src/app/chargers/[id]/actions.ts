@@ -9,6 +9,10 @@ import { availabilityContext } from "@/lib/services/listings";
 import { createBooking, quoteBooking } from "@/lib/services/bookings";
 import { availableStartTimes } from "@/lib/domain/availability";
 import { AppError } from "@/lib/errors";
+import { config } from "@/lib/config";
+import { visitorId } from "@/lib/request";
+import { rateLimit } from "@/lib/services/rate-limit";
+import { track } from "@/lib/services/analytics";
 
 export async function slotsAction(listingId: string, date: string, durationMinutes: number): Promise<string[]> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isInteger(durationMinutes)) return [];
@@ -40,7 +44,10 @@ export async function bookAction(_: ActionState, form: FormData): Promise<Action
   try {
     const viewer = await getViewer();
     if (!viewer) throw new AppError("unauthenticated", "Sign in to book this charger.");
-    result = await createBooking(await getDb(), viewer, parsed.data);
+    const db = await getDb();
+    await rateLimit(db, `book:${viewer.userId}`, 20, 60 * 60);
+    result = await createBooking(db, viewer, parsed.data);
+    await track(db, "booking_request", { visitorId: await visitorId(), userId: viewer.userId, listingId: parsed.data.listingId, bookingId: result.bookingId, isDemo: config.demoMode });
   } catch (e) {
     return failure(e);
   }

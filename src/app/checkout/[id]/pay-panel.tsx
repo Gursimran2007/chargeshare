@@ -86,7 +86,10 @@ export function PayPanel({
     if (!order) return;
     start(async () => {
       const r = await demoPayAction(bookingId, order.orderId, outcome);
-      if (r && !r.ok) toast.error(r.message);
+      if (r && !r.ok) {
+        toast.error(r.message);
+        setOrder(null); // a failed order is never reused; retrying creates a fresh one
+      }
     });
   }
 
@@ -102,7 +105,7 @@ export function PayPanel({
         </div>
       ) : null}
       {provider === "demo" && order ? (
-        <div className="rounded-2xl border-2 border-dashed border-warn-600/40 bg-warn-100/40 p-5">
+        <div className="rounded-xl border-2 border-dashed border-warn-600/40 bg-warn-100/40 p-5">
           <div className="flex items-center gap-2 font-semibold text-warn-600">
             <FlaskConical className="size-5" aria-hidden /> DEMO PAYMENT · no money will move
           </div>

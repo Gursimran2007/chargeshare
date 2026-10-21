@@ -1,5 +1,7 @@
 import "server-only";
-import { config } from "@/lib/config";
+import { config, paymentEnv } from "@/lib/config";
+import { AppError } from "@/lib/errors";
+import { paymentMode } from "./mode";
 import { createDemoProvider } from "./demo";
 import { createRazorpayProvider } from "./razorpay";
 import type { PaymentProvider } from "./types";
@@ -13,10 +15,21 @@ export function demoProvider() {
   return demo;
 }
 
-/** The provider used for new payments. Live Razorpay is refused while demo mode is on. */
+export function currentPaymentMode() {
+  return paymentMode(paymentEnv());
+}
+
+/**
+ * The provider used for new payments. Refuses (with a user-safe message) when the
+ * environment is misconfigured, e.g. simulated payments outside demo mode.
+ */
 export function activeProvider(): PaymentProvider {
-  if (config.payments.provider === "razorpay") {
-    if (config.demoMode) throw new Error("Live payments are disabled in demo mode.");
+  const mode = currentPaymentMode();
+  if (!mode.ok) {
+    console.error(`[payments] ${mode.reason}`);
+    throw new AppError("unavailable", "Payments are temporarily unavailable. Your booking is held; please try again later or contact support.");
+  }
+  if (mode.provider === "razorpay") {
     const p = config.payments;
     return createRazorpayProvider(p.razorpayKeyId, p.razorpayKeySecret, p.razorpayWebhookSecret);
   }

@@ -89,71 +89,53 @@ export function Rating({ avg, count }: { avg: number | null; count: number }) {
   );
 }
 
-const PALETTES = [
-  ["#0a1730", "#12385a", "#0fb5ae"],
-  ["#0d1f3a", "#1f4a6b", "#2fd3c9"],
-  ["#111c33", "#2a3f66", "#7ce8e0"],
-  ["#0b1b33", "#14455a", "#22c55e"],
-];
+const PALETTES = ["#0a1730", "#0f2140", "#12223f", "#0c1b2e"];
 
-/** Deterministic illustrated cover for listings without host photos. */
-export function ListingArt({ seed, kind, className, kw }: { seed: string; kind: string; className?: string; kw?: number }) {
+/**
+ * Deterministic architectural cover for listings without host photos: a flat,
+ * restrained drawing of the property type and a wall-mounted charger. Real host
+ * photos replace it as soon as they are uploaded.
+ */
+export function ListingArt({ seed, kind, className }: { seed: string; kind: string; className?: string }) {
   let h = 0;
   for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  const [bg, mid, accent] = PALETTES[h % PALETTES.length];
-  const towers = kind === "office" || kind === "hotel" || kind === "retail" || kind === "apartment";
-  const id = `g${h}`;
+  const bg = PALETTES[h % PALETTES.length];
+  const line = "#ffffff";
+  const building =
+    kind === "office" || kind === "retail" ? (
+      <g fill="none" stroke={line} strokeOpacity="0.16" strokeWidth="2">
+        <rect x="40" y="40" width="150" height="160" />
+        {[0, 1, 2, 3, 4].map((r) => [0, 1, 2, 3].map((c) => <rect key={`${r}${c}`} x={56 + c * 34} y={56 + r * 28} width="20" height="14" />))}
+      </g>
+    ) : kind === "hotel" || kind === "apartment" ? (
+      <g fill="none" stroke={line} strokeOpacity="0.16" strokeWidth="2">
+        <rect x="30" y="30" width="110" height="170" />
+        <rect x="150" y="70" width="70" height="130" />
+        {[0, 1, 2, 3, 4, 5].map((r) => [0, 1, 2].map((c) => <rect key={`${r}${c}`} x={44 + c * 32} y={44 + r * 25} width="18" height="12" />))}
+      </g>
+    ) : (
+      <g fill="none" stroke={line} strokeOpacity="0.16" strokeWidth="2">
+        <path d="M40 200V118l80-56 80 56v82" />
+        <rect x="70" y="140" width="34" height="60" />
+        <rect x="130" y="138" width="40" height="30" />
+      </g>
+    );
   return (
-    <svg viewBox="0 0 400 260" className={cn("h-full w-full", className)} preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustration of an EV charger">
-      <defs>
-        <linearGradient id={`${id}s`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={bg} />
-          <stop offset="1" stopColor={mid} />
-        </linearGradient>
-        <radialGradient id={`${id}g`} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor={accent} stopOpacity="0.55" />
-          <stop offset="1" stopColor={accent} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <rect width="400" height="260" fill={`url(#${id}s)`} />
-      {towers ? (
-        <g fill="#ffffff" opacity="0.07">
-          <rect x={20 + (h % 30)} y="40" width="70" height="170" />
-          <rect x="110" y="70" width="60" height="140" />
-          <rect x="290" y={30 + (h % 25)} width="80" height="180" />
-        </g>
-      ) : (
-        <g fill="#ffffff" opacity="0.08">
-          <path d="M30 210V120l70-50 70 50v90Z" />
-          <path d="M260 210v-70l55-40 55 40v70Z" />
-        </g>
-      )}
-      <g fill="#ffffff" opacity="0.25">
-        {[...Array(6)].map((_, i) => (
-          <circle key={i} cx={(h >> i) % 400} cy={(h >> (i + 3)) % 90} r="1.2" />
-        ))}
+    <svg viewBox="0 0 400 260" className={cn("h-full w-full", className)} preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustration of the charging location">
+      <rect width="400" height="260" fill={bg} />
+      {building}
+      <rect x="0" y="200" width="400" height="60" fill="#071226" />
+      <g stroke="#ffffff" strokeOpacity="0.28" strokeWidth="2">
+        <line x1="250" y1="212" x2="250" y2="260" />
+        <line x1="370" y1="212" x2="370" y2="260" />
       </g>
-      <rect x="0" y="208" width="400" height="52" fill="#071226" opacity="0.65" />
-      <g stroke="#ffffff" strokeOpacity="0.35" strokeWidth="3" strokeDasharray="14 12">
-        <line x1="60" y1="236" x2="340" y2="236" />
-      </g>
-      <circle cx="232" cy="140" r="90" fill={`url(#${id}g)`} />
       <g>
-        <rect x="212" y="96" width="44" height="114" rx="10" fill="#f5f7fa" />
-        <rect x="220" y="108" width="28" height="18" rx="4" fill={bg} />
-        <rect x="224" y="112" width="12" height="3" rx="1.5" fill={accent} />
-        <path d="M236 140l-7 11h6l-2 9 9-12h-6l2-8z" fill={accent} />
-        <path d="M256 150c30 0 34 30 52 48" stroke="#f5f7fa" strokeWidth="5" fill="none" strokeLinecap="round" />
-        <rect x="300" y="190" width="18" height="12" rx="3" fill="#f5f7fa" />
+        <rect x="282" y="104" width="40" height="96" rx="6" fill="#e9eef3" />
+        <rect x="289" y="114" width="26" height="14" rx="2" fill={bg} />
+        <rect x="292" y="119" width="10" height="3" rx="1.5" fill="#2fd3c9" />
+        <path d="M303 140l-6 10h5l-2 8 8-11h-5l2-7z" fill="#0fb5ae" />
+        <path d="M322 160c22 0 26 24 34 40" stroke="#e9eef3" strokeWidth="4" fill="none" strokeLinecap="round" />
       </g>
-      {kw ? (
-        <g>
-          <rect x="18" y="18" rx="12" width="86" height="26" fill="#ffffff" fillOpacity="0.12" />
-          <text x="61" y="36" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="600" fontFamily="sans-serif">
-            {kw} kW
-          </text>
-        </g>
-      ) : null}
     </svg>
   );
 }
@@ -187,7 +169,7 @@ export function ListingCard({ l, href, compact }: { l: ListingCardData; href?: s
   return (
     <Link
       href={href ?? `/chargers/${l.id}`}
-      className="group block overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-lift"
+      className="group block overflow-hidden rounded-xl border border-ink-100 bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-lift"
     >
       <div className={cn("relative overflow-hidden bg-ink-900", compact ? "aspect-[16/9]" : "aspect-[16/10]")}>
         <ListingPhoto l={l} className="transition duration-500 group-hover:scale-[1.03]" />

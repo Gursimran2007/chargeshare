@@ -5,7 +5,9 @@ import { DemoBadge, ListingPhoto } from "@/components/domain";
 import { PayPanel } from "./pay-panel";
 import { getDb } from "@/lib/db";
 import { requireViewer } from "@/lib/auth";
-import { config } from "@/lib/config";
+import { currentPaymentMode } from "@/lib/payments";
+import { visitorId } from "@/lib/request";
+import { track } from "@/lib/services/analytics";
 import { formatINR } from "@/lib/money";
 import { formatDateTime, formatTime } from "@/lib/domain/time";
 import { POLICY_TEXT, type CancellationPolicy } from "@/lib/domain/cancellation";
@@ -30,7 +32,9 @@ export default async function CheckoutPage({ params }: PageProps<"/checkout/[id]
   const b = rows[0];
   if (!b || b.driver_id !== viewer.userId) notFound();
   if (b.status !== "pending_payment") redirect(`/bookings/${id}`);
+  await track(db, "checkout_view", { visitorId: await visitorId(), userId: viewer.userId, listingId: b.listing_id, bookingId: b.id, isDemo: b.is_demo });
   const policy = POLICY_TEXT[b.cancellation_policy];
+  const mode = currentPaymentMode();
   return (
     <Container className="max-w-5xl py-8 sm:py-12">
       <PageHeader eyebrow={`Booking ${b.code}`} title="Confirm and pay" subtitle="Your booking is confirmed only after payment is verified by our server." />
@@ -59,13 +63,20 @@ export default async function CheckoutPage({ params }: PageProps<"/checkout/[id]
         </Card>
         <div className="space-y-4">
           <Card className="p-5">
-            <PayPanel
-              bookingId={b.id}
-              amountPaise={b.amount_paise}
-              holdUntil={b.hold_expires_at ? new Date(b.hold_expires_at).toISOString() : null}
-              provider={config.payments.provider}
-              prefill={{ name: viewer.fullName, email: viewer.email }}
-            />
+            {mode.ok ? (
+              <PayPanel
+                bookingId={b.id}
+                amountPaise={b.amount_paise}
+                holdUntil={b.hold_expires_at ? new Date(b.hold_expires_at).toISOString() : null}
+                provider={mode.provider}
+                prefill={{ name: viewer.fullName, email: viewer.email }}
+              />
+            ) : (
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-stop-600">Payments are not available right now</p>
+                <p className="text-ink-600">You have not been charged. Your slot stays held until the time shown on your booking; please try again later or contact support.</p>
+              </div>
+            )}
           </Card>
           <p className="flex gap-2 text-xs text-ink-500">
             <ShieldCheck className="size-4 shrink-0 text-go-600" aria-hidden />

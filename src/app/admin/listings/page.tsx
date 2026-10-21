@@ -19,7 +19,7 @@ export default async function AdminListings() {
   return (
     <div>
       <h1 className="mb-4 text-2xl font-semibold">Listings</h1>
-      <div className="overflow-x-auto rounded-2xl border border-ink-100 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-ink-100 bg-white">
         <table className="w-full min-w-[860px] text-sm">
           <thead className="bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-500"><tr><th className="px-4 py-3">Listing</th><th className="px-4 py-3">Host</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Checks</th><th className="px-4 py-3">Price</th><th className="px-4 py-3">Bookings</th><th className="px-4 py-3">Actions</th></tr></thead>
           <tbody className="divide-y divide-ink-100">

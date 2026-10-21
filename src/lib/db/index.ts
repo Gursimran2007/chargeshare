@@ -15,7 +15,8 @@ async function init(): Promise<Db> {
     // Networked Postgres (Supabase). Migrations are applied by `npm run db:migrate`.
     return createPool(config.databaseUrl);
   }
-  const dir = path.resolve(process.cwd(), config.pgliteDataDir);
+  // Runtime data directory, not a build input.
+  const dir = path.resolve(/*turbopackIgnore: true*/ process.cwd(), config.pgliteDataDir);
   fs.mkdirSync(dir, { recursive: true });
   const db = await createPglite(dir);
   await migrate(db, { withShim: true });

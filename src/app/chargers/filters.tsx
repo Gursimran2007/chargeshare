@@ -66,7 +66,7 @@ export function Filters({ hasVehicle, signedIn }: { hasVehicle: boolean; signedI
       </div>
       {sp.get("lat") ? <input type="hidden" name="lat" value={sp.get("lat")!} /> : null}
       {sp.get("lng") ? <input type="hidden" name="lng" value={sp.get("lng")!} /> : null}
-      <div id="filter-panel" className={cn("grid gap-3 rounded-2xl border border-ink-100 bg-white p-4 sm:grid-cols-2", !open && "hidden")}>
+      <div id="filter-panel" className={cn("grid gap-3 rounded-xl border border-ink-100 bg-white p-4 sm:grid-cols-2", !open && "hidden")}>
         <div>
           <label htmlFor="connector" className="mb-1 block text-xs font-medium text-ink-600">Connector</label>
           <Select id="connector" name="connector" defaultValue={sp.get("connector") ?? ""}>

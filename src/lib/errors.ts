@@ -5,7 +5,8 @@ export type ErrorCode =
   | "invalid"
   | "conflict"
   | "unavailable"
-  | "payment_failed";
+  | "payment_failed"
+  | "rate_limited";
 
 const STATUS: Record<ErrorCode, number> = {
   unauthenticated: 401,
@@ -15,6 +16,7 @@ const STATUS: Record<ErrorCode, number> = {
   conflict: 409,
   unavailable: 409,
   payment_failed: 402,
+  rate_limited: 429,
 };
 
 /** An error whose message is safe to show to the user. */

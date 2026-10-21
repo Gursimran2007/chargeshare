@@ -20,7 +20,7 @@ export default async function NotificationsPage() {
     <Container className="max-w-3xl py-8 sm:py-12">
       <PageHeader title="Notifications" />
       {rows.length ? (
-        <ul className="divide-y divide-ink-100 overflow-hidden rounded-2xl border border-ink-100 bg-white">
+        <ul className="divide-y divide-ink-100 overflow-hidden rounded-xl border border-ink-100 bg-white">
           {rows.map((n) => {
             const inner = (
               <div className={cn("flex gap-3 p-4", !n.read_at && "bg-volt-50/60")}>

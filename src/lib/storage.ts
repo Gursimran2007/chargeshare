@@ -36,7 +36,7 @@ export async function saveUpload(file: File, prefix: string, opts: { imagesOnly?
     });
     if (!res.ok) throw new AppError("invalid", "Upload failed. Please try again.");
   } else {
-    const full = path.resolve(process.cwd(), config.uploadDir, key);
+    const full = path.resolve(/*turbopackIgnore: true*/ process.cwd(), config.uploadDir, key);
     await fs.mkdir(path.dirname(full), { recursive: true });
     await fs.writeFile(full, buf);
   }
@@ -54,5 +54,5 @@ export async function readUpload(key: string): Promise<Buffer | null> {
     });
     return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
   }
-  return fs.readFile(path.resolve(process.cwd(), config.uploadDir, key)).catch(() => null);
+  return fs.readFile(path.resolve(/*turbopackIgnore: true*/ process.cwd(), config.uploadDir, key)).catch(() => null);
 }

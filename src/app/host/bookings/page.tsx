@@ -4,6 +4,7 @@ import { Card, Container, EmptyState, PageHeader, cn } from "@/components/ui";
 import { BookingStatusPill } from "@/components/domain";
 import { HostNav } from "../host-nav";
 import { getDb } from "@/lib/db";
+import { maybeSweep } from "@/lib/services/maintenance";
 import { requireRolePage } from "@/lib/auth";
 import { formatINR } from "@/lib/money";
 import { formatDateTime, formatTime, localDateString, zonedParts } from "@/lib/domain/time";
@@ -17,6 +18,7 @@ export default async function HostBookingsPage({ searchParams }: PageProps<"/hos
   const viewer = await requireRolePage("host", "/host/bookings");
   const sp = await searchParams;
   const db = await getDb();
+  await maybeSweep(db);
   const weekOffset = Number(sp.week ?? 0) || 0;
   const { rows } = await db.query<{ id: string; code: string; status: BookingStatus; start_at: Date; end_at: Date; amount_paise: number; host_share_paise: number; title: string; driver: string; listing_id: string }>(
     `select b.id, b.code, b.status, b.start_at, b.end_at, b.amount_paise, b.host_share_paise, l.title, split_part(p.full_name, ' ', 1) as driver, b.listing_id
@@ -76,7 +78,7 @@ export default async function HostBookingsPage({ searchParams }: PageProps<"/hos
       </Card>
       <h2 className="mb-3 text-lg font-semibold">All bookings</h2>
       {rows.length ? (
-        <div className="overflow-x-auto rounded-2xl border border-ink-100 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-ink-100 bg-white">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-500">
               <tr><th className="px-4 py-3">Booking</th><th className="px-4 py-3">When</th><th className="px-4 py-3">Listing</th><th className="px-4 py-3">Driver</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Your share</th></tr>

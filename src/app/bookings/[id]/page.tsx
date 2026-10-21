@@ -5,6 +5,7 @@ import { Badge, Card, Container, LinkButton } from "@/components/ui";
 import { BookingStatusPill, DemoBadge } from "@/components/domain";
 import { CancelButton, CheckInButton, DisputeButton, HostRespond, HostSession, MessageForm, ReviewForm } from "./booking-panels";
 import { getDb } from "@/lib/db";
+import { maybeSweep } from "@/lib/services/maintenance";
 import { requireViewer } from "@/lib/auth";
 import { formatINR } from "@/lib/money";
 import { formatDateTime, formatTime } from "@/lib/domain/time";
@@ -22,6 +23,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const viewer = await requireViewer(`/bookings/${id}`);
   const db = await getDb();
+  await maybeSweep(db);
   const { rows } = await db.query<{
     id: string; code: string; status: BookingStatus; driver_id: string; host_id: string; listing_id: string;
     start_at: Date; end_at: Date; duration_minutes: number; price_per_hour_paise: number; booking_fee_paise: number;
@@ -83,7 +85,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
     <Container className="max-w-5xl py-8 sm:py-12">
       <Link href={back} className="text-sm text-ink-500 hover:text-ink-900">← Back</Link>
       {sp.confirmed && b.status === "confirmed" ? (
-        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-go-600/20 bg-go-100 p-4">
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-go-600/20 bg-go-100 p-4">
           <CheckCircle2 className="mt-0.5 size-5 text-go-600" aria-hidden />
           <div>
             <div className="font-semibold text-go-600">Booking confirmed</div>
@@ -95,7 +97,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
         </div>
       ) : null}
       {sp.requested && b.status === "requested" ? (
-        <div className="mt-4 rounded-2xl border border-warn-600/20 bg-warn-100/60 p-4 text-sm text-ink-700">
+        <div className="mt-4 rounded-xl border border-warn-600/20 bg-warn-100/60 p-4 text-sm text-ink-700">
           <strong>Request sent.</strong> The host will accept or decline. You will only be asked to pay once they accept.
         </div>
       ) : null}
@@ -152,7 +154,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
                   const mine = m.sender_id === viewer.userId;
                   return (
                     <li key={m.id} className={`flex ${mine ? "justify-end" : ""}`}>
-                      <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-ink-900 text-white" : "bg-ink-100 text-ink-900"}`}>
+                      <div className={`max-w-[80%] rounded-xl px-3.5 py-2 text-sm ${mine ? "bg-ink-900 text-white" : "bg-ink-100 text-ink-900"}`}>
                         <p className="whitespace-pre-line">{m.body}</p>
                         <p className={`mt-1 text-[10px] ${mine ? "text-ink-300" : "text-ink-500"}`}>{formatDateTime(m.created_at)}</p>
                       </div>
@@ -212,6 +214,9 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
                 <Badge tone={payment[0].status === "captured" ? "go" : payment[0].status === "failed" ? "stop" : "neutral"}>{payment[0].status.replace("_", " ")}</Badge>
                 {payment[0].provider === "demo" ? <Badge tone="warn">DEMO · simulated</Badge> : <span>via Razorpay</span>}
               </div>
+            ) : null}
+            {role !== "host" && payment[0] && payment[0].status !== "created" && payment[0].status !== "failed" ? (
+              <Link href={`/bookings/${b.id}/receipt`} className="mt-3 inline-block text-sm font-medium text-volt-700 underline">View receipt</Link>
             ) : null}
             {refunds.map((r, i) => (
               <div key={i} className="mt-3 rounded-xl bg-ink-50 p-3 text-xs">

@@ -1,7 +1,7 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import { useRouter } from "next/navigation";
 
@@ -42,6 +42,7 @@ export function MapView({
   const map = useRef<LeafletMap | null>(null);
   const markers = useRef<Map<string, Marker>>(new Map());
   const router = useRouter();
+  const [tilesFailed, setTilesFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +52,15 @@ export function MapView({
       if (cancelled || !el.current || map.current) return;
       const m = L.map(el.current, { zoomControl: false, scrollWheelZoom: true }).setView([center.lat, center.lng], zoom);
       L.control.zoom({ position: "bottomright" }).addTo(m);
-      L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 18 }).addTo(m);
+      let failures = 0;
+      L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 18 })
+        .on("tileerror", () => {
+          if (++failures === 4) setTilesFailed(true);
+        })
+        .on("tileload", () => {
+          failures = 0;
+        })
+        .addTo(m);
       map.current = m;
       for (const p of pins) {
         if (circle) {
@@ -87,5 +96,14 @@ export function MapView({
     });
   }, [activeId]);
 
-  return <div ref={el} className={className} role="region" aria-label="Map of chargers (approximate locations)" />;
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      <div ref={el} className="h-full w-full" role="region" aria-label="Map of chargers (approximate locations)" />
+      {tilesFailed ? (
+        <div className="pointer-events-none absolute inset-x-3 bottom-3 z-[400] rounded-lg bg-white/95 px-3 py-2 text-xs text-ink-600 shadow">
+          Map tiles could not be loaded. Pins still show approximate positions; the list has every result.
+        </div>
+      ) : null}
+    </div>
+  );
 }

@@ -13,7 +13,7 @@ export default async function AuditLog() {
     <div>
       <h1 className="text-2xl font-semibold">Audit log</h1>
       <p className="mb-4 mt-1 text-sm text-ink-500">Append-only. The database rejects updates and deletes on this table.</p>
-      <div className="overflow-x-auto rounded-2xl border border-ink-100 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-ink-100 bg-white">
         <table className="w-full min-w-[820px] text-sm">
           <thead className="bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-500"><tr><th className="px-4 py-3">When</th><th className="px-4 py-3">Actor</th><th className="px-4 py-3">Action</th><th className="px-4 py-3">Target</th><th className="px-4 py-3">Reason / data</th></tr></thead>
           <tbody className="divide-y divide-ink-100">

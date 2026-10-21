@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,13 +18,20 @@ export function SubmitButton({ children, pendingText, ...props }: ComponentProps
 
 type State = { ok: boolean; message?: string } | null;
 
-/** Shows a toast whenever an action returns a message. */
-export function useActionToast(state: State) {
-  useEffect(() => {
-    if (!state?.message) return;
-    if (state.ok) toast.success(state.message);
-    else toast.error(state.message);
-  }, [state]);
+/**
+ * Wraps a server action so its message is toasted as soon as it returns. Toasting
+ * here, rather than in an effect, still works when the server re-render removes
+ * the form that submitted it (e.g. an "Accept" button that disappears once accepted).
+ */
+export function withToast<S extends State, A extends unknown[]>(action: (prev: S, ...args: A) => Promise<S>) {
+  return async (prev: S, ...args: A): Promise<S> => {
+    const result = await action(prev, ...args);
+    if (result?.message) {
+      if (result.ok) toast.success(result.message);
+      else toast.error(result.message);
+    }
+    return result;
+  };
 }
 
 export function FormMessage({ state }: { state: State }) {

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db";
 import { getViewer } from "@/lib/auth";
-import { activeProvider } from "@/lib/payments";
+import { activeProvider, currentPaymentMode } from "@/lib/payments";
 import { capturePayment } from "@/lib/services/payments";
 import { isAppError } from "@/lib/errors";
 
@@ -18,8 +18,9 @@ export async function POST(req: NextRequest) {
   if (!viewer) return NextResponse.json({ error: "Please sign in." }, { status: 401 });
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid payment response." }, { status: 400 });
+  const mode = currentPaymentMode();
+  if (!mode.ok || mode.provider !== "razorpay") return NextResponse.json({ error: "Razorpay is not enabled." }, { status: 400 });
   const provider = activeProvider();
-  if (provider.name !== "razorpay") return NextResponse.json({ error: "Razorpay is not enabled." }, { status: 400 });
   const db = await getDb();
   const { rows } = await db.query<{ driver_id: string }>(
     "select b.driver_id from public.payments p join public.bookings b on b.id = p.booking_id where p.provider_order_id = $1",

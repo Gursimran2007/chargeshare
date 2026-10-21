@@ -32,7 +32,19 @@ export default async function AdminAnalytics() {
           <Stat label="Cancellation rate" value={pct(m.cancellationRate)} />
           <Stat label="Refund rate" value={pct(m.refundRate)} hint="Refunded ÷ gross booking value" />
           <Stat label="Charger utilisation" value={pct(m.utilisation)} hint={m.utilisationNote} />
+          <Stat label="Booking completion rate" value={pct(m.bookingCompletionRate)} hint="Completed ÷ confirmed bookings whose slot has ended (excl. cancellations)" />
+          <Stat label="Host response time (median)" value={m.hostResponseMedianMinutes === null ? "—" : `${m.hostResponseMedianMinutes} min`} hint="Request created → host accepts or declines" />
         </div>
+      </section>
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">Funnel · last 30 days, distinct visitors</h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat label="Searched" value={m.funnel.searchVisitors} />
+          <Stat label="Viewed a listing" value={m.funnel.listingVisitors} hint={`Search → listing: ${pct(m.funnel.searchToListing)}`} />
+          <Stat label="Requested a booking" value={m.funnel.bookingVisitors} hint={`Listing → booking: ${pct(m.funnel.listingToBooking)}`} />
+          <Stat label="Chargebacks" value="Not tracked" hint="Needs Razorpay dispute webhooks (payment.dispute.*)" />
+        </div>
+        <p className="mt-2 text-xs text-ink-500">Seeded bookings were created directly, so they are not in the funnel. CAC and host acquisition cost need real marketing spend data and are not shown.</p>
       </section>
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">Money (kept separate on purpose)</h2>

@@ -36,7 +36,7 @@ export function LoginForm({ next, demoAccounts, demoPassword }: { next: string; 
         </SubmitButton>
       </form>
       {demoAccounts ? (
-        <div className="mt-8 rounded-2xl border border-warn-600/20 bg-warn-100/50 p-4">
+        <div className="mt-8 rounded-xl border border-warn-600/20 bg-warn-100/50 p-4">
           <div className="text-sm font-semibold text-ink-900">Demo accounts</div>
           <p className="mt-0.5 text-xs text-ink-500">
             Fictional users for exploring the product. Password for all: <code className="font-mono font-semibold">{demoPassword}</code>
