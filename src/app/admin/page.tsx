@@ -33,6 +33,7 @@ export default async function AdminAnalytics() {
           <Stat label="Refund rate" value={pct(m.refundRate)} hint="Refunded ÷ gross booking value" />
           <Stat label="Charger utilisation" value={pct(m.utilisation)} hint={m.utilisationNote} />
           <Stat label="Booking completion rate" value={pct(m.bookingCompletionRate)} hint="Completed ÷ confirmed bookings whose slot has ended (excl. cancellations)" />
+          <Stat label="Host-caused cancellations" value={pct(m.hostCancellationRate)} hint="Cancelled by host ÷ bookings that were confirmed" />
           <Stat label="Host response time (median)" value={m.hostResponseMedianMinutes === null ? "—" : `${m.hostResponseMedianMinutes} min`} hint="Request created → host accepts or declines" />
         </div>
       </section>

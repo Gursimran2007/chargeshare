@@ -34,7 +34,7 @@ async function providerFor(bookingId: string) {
 
 export async function reviewCheckAction(_: ActionState, form: FormData): Promise<ActionState> {
   try {
-    await reviewVerification(await getDb(), await admin(), String(form.get("id")), String(form.get("decision")) as Decision, String(form.get("reason") ?? ""));
+    await reviewVerification(await getDb(), await admin(), String(form.get("id")), String(form.get("decision")) as Decision, String(form.get("reason") ?? ""), providerByName);
     return done("Decision recorded.", "/admin/verifications");
   } catch (e) {
     return failure(e);
@@ -53,7 +53,7 @@ export async function approveListingAction(_: ActionState, form: FormData): Prom
 export async function moderateListingAction(_: ActionState, form: FormData): Promise<ActionState> {
   try {
     const act = String(form.get("act")) as "reject" | "suspend" | "request_changes";
-    await moderateListing(await getDb(), await admin(), String(form.get("listingId")), act, String(form.get("reason") ?? ""));
+    await moderateListing(await getDb(), await admin(), String(form.get("listingId")), act, String(form.get("reason") ?? ""), providerByName);
     return done("Listing updated.", "/admin/listings", "/admin/verifications");
   } catch (e) {
     return failure(e);
@@ -102,7 +102,7 @@ export async function payoutStatusAction(_: ActionState, form: FormData): Promis
 export async function restrictAction(_: ActionState, form: FormData): Promise<ActionState> {
   try {
     const restrict = form.get("restrict") === "1";
-    await restrictUser(await getDb(), await admin(), String(form.get("userId")), restrict, String(form.get("reason") ?? ""));
+    await restrictUser(await getDb(), await admin(), String(form.get("userId")), restrict, String(form.get("reason") ?? ""), providerByName);
     return done(restrict ? "Account restricted." : "Restriction lifted.", "/admin/users");
   } catch (e) {
     return failure(e);

@@ -14,7 +14,7 @@ import { track } from "@/lib/services/analytics";
 function safeNext(v: FormDataEntryValue | null, fallback = "/dashboard") {
   const s = typeof v === "string" ? v : "";
   // Only same-site relative paths, to prevent open redirects.
-  return s.startsWith("/") && !s.startsWith("//") ? s : fallback;
+  return s.startsWith("/") && !s.startsWith("//") && !s.startsWith("/\\") ? s : fallback;
 }
 
 export async function signInAction(_: ActionState, form: FormData): Promise<ActionState> {

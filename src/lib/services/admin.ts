@@ -1,7 +1,8 @@
 import { AppError } from "@/lib/errors";
 import { adminIds, audit, notify, requireActive, requireRole, type Actor, type Db } from "./common";
+import { cancelUpcomingForListings, type ProviderFor } from "./bookings";
 
-export async function restrictUser(db: Db, actor: Actor | null, userId: string, restricted: boolean, reason: string) {
+export async function restrictUser(db: Db, actor: Actor | null, userId: string, restricted: boolean, reason: string, providerFor?: ProviderFor) {
   requireRole(actor, "admin");
   if (userId === actor.userId) throw new AppError("invalid", "You cannot restrict your own account.");
   if (restricted && reason.trim().length < 5) throw new AppError("invalid", "A reason is required.");
@@ -15,10 +16,11 @@ export async function restrictUser(db: Db, actor: Actor | null, userId: string, 
     ]);
     if (restricted) {
       // Restricted hosts' listings go offline.
-      await q.query(
-        "update public.charger_listings set status = 'suspended', suspended_reason = 'Host account restricted' where host_id = $1 and status in ('active','paused')",
+      const { rows: suspended } = await q.query<{ id: string }>(
+        "update public.charger_listings set status = 'suspended', suspended_reason = 'Host account restricted' where host_id = $1 and status in ('active','paused') returning id",
         [userId],
       );
+      await cancelUpcomingForListings(q, suspended.map((l) => l.id), "Host account restricted", actor.userId, providerFor);
     }
     await audit(q, actor.userId, restricted ? "user.restrict" : "user.unrestrict", "user", userId, {
       before: rows[0],

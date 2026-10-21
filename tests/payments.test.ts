@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "@/lib/db/core";
 import type { Actor } from "@/lib/services/common";
 import { createDemoProvider } from "@/lib/payments/demo";
@@ -7,7 +7,7 @@ import { hmacHex } from "@/lib/payments/signature";
 import { createBooking } from "@/lib/services/bookings";
 import { adminRefund, capturePayment, handleWebhook, startPayment } from "@/lib/services/payments";
 import { createPayout, hostEarnings, updatePayoutStatus } from "@/lib/services/finance";
-import { actorByEmail, defaultVehicle, expectAppError, istDate, listingByTitle, seededDb } from "./helpers";
+import { actorByEmail, defaultVehicle, expectAppError, istDate, listingByTitle, releaseHolds, seededDb } from "./helpers";
 
 const provider = createDemoProvider("demo-payment-secret", "demo-webhook-secret");
 
@@ -40,6 +40,7 @@ beforeAll(async () => {
   vehicle = await defaultVehicle(db, driver.userId);
 });
 afterAll(() => db.close());
+beforeEach(() => releaseHolds(db));
 
 describe("checkout signature verification", () => {
   it("rejects a forged or tampered signature", async () => {

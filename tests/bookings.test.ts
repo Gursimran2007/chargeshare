@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "@/lib/db/core";
 import type { Actor } from "@/lib/services/common";
 import { createDemoProvider } from "@/lib/payments/demo";
@@ -14,7 +14,8 @@ import {
 } from "@/lib/services/bookings";
 import { capturePayment, startPayment } from "@/lib/services/payments";
 import { restrictUser } from "@/lib/services/admin";
-import { actorByEmail, defaultVehicle, expectAppError, istDate, listingByTitle, seededDb } from "./helpers";
+import { moderateListing } from "@/lib/services/verification";
+import { actorByEmail, defaultVehicle, expectAppError, istDate, listingByTitle, releaseHolds, seededDb } from "./helpers";
 
 const provider = createDemoProvider("demo-payment-secret", "demo-webhook-secret");
 
@@ -42,6 +43,7 @@ beforeAll(async () => {
   comet = rows[0].id;
 });
 afterAll(() => db.close());
+beforeEach(() => releaseHolds(db));
 
 describe("server-side pricing", () => {
   it("prices from the listing and platform commission, ignoring anything the client sends", async () => {
@@ -88,6 +90,7 @@ describe("availability & conflicts", () => {
   });
 
   it("is backed by a database exclusion constraint, not just application checks", async () => {
+    await createBooking(db, driver, { listingId: adyar.id, date: istDate(19), startTime: "14:00", durationMinutes: 60, vehicleId: nexon, note: "" });
     const { rows } = await db.query<Record<string, unknown>>(
       "select * from public.bookings where listing_id = $1 and status = 'pending_payment' limit 1",
       [adyar.id],
@@ -153,6 +156,35 @@ describe("compatibility & eligibility", () => {
       "forbidden",
     );
     await restrictUser(db, admin, driver2.userId, false, "");
+  });
+});
+
+describe("anti-griefing", () => {
+  it("caps how many unpaid or pending slots one driver can hold", async () => {
+    for (const d of [40, 41, 42]) {
+      await createBooking(db, driver2, { listingId: adyar.id, date: istDate(d), startTime: "10:00", durationMinutes: 60, vehicleId: creta, note: "" });
+    }
+    const err = await expectAppError(
+      createBooking(db, driver2, { listingId: adyar.id, date: istDate(43), startTime: "10:00", durationMinutes: 60, vehicleId: creta, note: "" }),
+      "invalid",
+    );
+    expect(err.message).toMatch(/unpaid or pending/);
+  });
+});
+
+describe("safety cascade", () => {
+  it("suspending a listing cancels and fully refunds its upcoming bookings", async () => {
+    const guindy = await listingByTitle(db, "Guindy business park");
+    const b = await createBooking(db, driver, { listingId: guindy.id, date: istDate(44), startTime: "19:00", durationMinutes: 60, vehicleId: nexon, note: "" });
+    await pay(driver, b.bookingId);
+    await moderateListing(db, admin, guindy.id, "suspend", "Reported sparking at the socket", () => provider);
+    const { rows } = await db.query<{ status: string; refunded: number }>(
+      "select status, (select coalesce(sum(amount_paise), 0)::int from public.refunds r where r.booking_id = b.id) as refunded from public.bookings b where id = $1",
+      [b.bookingId],
+    );
+    expect(rows[0]).toEqual({ status: "cancelled", refunded: 13000 });
+    const { rows: n } = await db.query("select 1 from public.notifications where user_id = $1 and title like $2", [driver.userId, "%cancelled by ChargeShare%"]);
+    expect(n.length).toBeGreaterThan(0);
   });
 });
 

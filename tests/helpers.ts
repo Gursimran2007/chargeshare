@@ -47,3 +47,8 @@ export async function expectAppError(p: Promise<unknown>, code: string) {
   }
   throw new Error(`expected ${code} error, but it resolved`);
 }
+
+/** Expire every open hold so per-driver hold limits do not leak between test cases. */
+export async function releaseHolds(db: Db) {
+  await db.query("update public.bookings set status = 'expired' where status in ('pending_payment', 'requested')");
+}

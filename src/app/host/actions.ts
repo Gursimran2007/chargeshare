@@ -187,7 +187,8 @@ export async function unblockAction(_: ActionState, form: FormData): Promise<Act
 export async function replyReviewAction(_: ActionState, form: FormData): Promise<ActionState> {
   try {
     await replyToReview(await getDb(), await viewer(), String(form.get("reviewId")), String(form.get("reply") ?? ""));
-    revalidatePath("/host");
+    revalidatePath("/host", "layout");
+    revalidatePath("/chargers", "layout");
     return { ok: true, message: "Reply posted." };
   } catch (e) {
     return failure(e);

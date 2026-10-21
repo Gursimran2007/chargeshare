@@ -4,6 +4,16 @@ A marketplace for booking existing, safely installed EV chargers in India: homes
 
 This repository is a production-minded MVP. It runs fully offline in **demo mode** with fictional Chennai listings and simulated payments, and switches to Supabase + Razorpay through environment variables.
 
+| Document | What it covers |
+|---|---|
+| [BUILD_STATUS.md](BUILD_STATUS.md) | Current state, commands run and their results, known defects, next actions |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Engineering decision log |
+| [SECURITY.md](SECURITY.md) | Adversarial review, known gaps, production checklist |
+| [docs/RESEARCH.md](docs/RESEARCH.md) | Regulatory, tariff and payments research, labelled fact / claim / assumption |
+| [docs/PILOT_PLAN.md](docs/PILOT_PLAN.md) | 90-day Chennai pilot with expansion thresholds |
+| [docs/METRICS.md](docs/METRICS.md) | Metric definitions and what is tracked |
+| `/how-it-works` (in the app) | Business model, live unit economics, real vs simulated |
+
 > **Demo data is fictional.** Every seeded host, listing, booking, review and payment is made up. Seeded verification checks are flagged `is_simulated` and are labelled "simulated" everywhere in the UI. No money moves in demo mode.
 
 ---
@@ -59,7 +69,9 @@ src/lib/services/         server-side business operations (bookings, payments, l
 src/lib/payments/         demo + Razorpay providers and HMAC helpers
 src/lib/auth/             auth adapter and request-scoped viewer
 src/app/                  routes (driver, host, admin, auth, policies, API)
-tests/                    66 automated tests
+tests/                    unit + integration tests (Vitest, in-memory Postgres)
+e2e/                      browser journeys (Playwright, local Chrome, desktop + mobile)
+docs/                     decisions, research, pilot plan, metrics
 ```
 
 ### Trade-offs worth knowing
@@ -76,7 +88,7 @@ tests/                    66 automated tests
 ## What is implemented
 
 ### Driver
-Sign up / sign in / password reset · vehicle profiles with an indicative catalogue of Indian EVs · map + list discovery with locality search, "near me", filters (connector, power, price, access type, instant book, availability on a date/time, compatible with my vehicle) · listing pages with approximate location, specs, hours, five-check verification panel, cancellation policy, reviews · live slot picker, server-computed quote, compatibility and charge estimate · instant book or request-to-book · checkout with a slot-hold countdown · confirmation with exact address, access instructions and directions · upcoming/past bookings · policy-based cancellation with automatic refund · check-in · privacy-masked messaging · disputes within 72 hours · reviews after completion · support tickets and safety reports · notifications.
+Sign up / sign in / password reset · printable receipts · vehicle profiles with an indicative catalogue of Indian EVs · map + list discovery with locality search, "near me", filters (connector, power, price, access type, instant book, availability on a date/time, compatible with my vehicle) · listing pages with approximate location, specs, hours, five-check verification panel, cancellation policy, reviews · live slot picker, server-computed quote, compatibility and charge estimate · instant book or request-to-book · checkout with a slot-hold countdown · confirmation with exact address, access instructions and directions · upcoming/past bookings · policy-based cancellation with automatic refund · check-in · privacy-masked messaging · disputes within 72 hours · reviews after completion · support tickets and safety reports · notifications.
 
 ### Host
 Host profile · identity verification with document upload · self-declared safety checklist · six-step listing wizard (charger, location, access, pricing and rules, weekly availability) · photo uploads (public listing photos vs reviewer-only installation photos) · per-listing evidence for property permission, charger spec, installation and electrical safety · submit for review, pause/resume · blocked dates · request accept/decline · weekly calendar · session start/complete · earnings from the ledger (gross, commission, refunds, net, pending, held, paid out, available) · payout history.
@@ -110,7 +122,8 @@ npm run build        # production build
 npm run start        # serve the production build (requires SESSION_SECRET)
 npm run lint
 npm run typecheck
-npm test             # 66 tests against in-memory Postgres
+npm test             # 73 unit/integration tests against in-memory Postgres
+npm run test:e2e     # production build + 10 browser journeys (needs Google Chrome installed)
 npm run check        # lint + typecheck + test
 npm run db:migrate   # apply migrations to DATABASE_URL (Supabase)
 npm run demo:reset   # wipe the embedded demo database and uploads
@@ -126,7 +139,13 @@ npm run demo:reset   # wipe the embedded demo database and uploads
 | `tests/security.test.ts` | Admin-only actions for drivers/hosts, no self-approval, listing draft/verification rules, household-socket block, DB-enforced activation, listing IDOR, re-review on spec change, **Row Level Security** (profiles, roles, vehicles, bookings, payments, ledger, private addresses, forged writes, verification/listing guards, restriction, audit and ledger immutability), local auth sessions and single-use password resets |
 | `tests/seed.test.ts` | Seed integrity and ledger balance |
 
-Last run: **66 passed**, lint clean, typecheck clean, `next build` succeeds.
+| `tests/ops.test.ts` | Payment-mode guard (no simulated payments outside demo), rate limiting, platform-wide hold expiry, funnel metrics |
+| `e2e/driver.spec.ts` | Real browser: search → slot → demo pay → confirmation → receipt → cancel/refund; simulated failure then retry |
+| `e2e/host-admin.spec.ts` | Sign up as host → profile → identity evidence → checklist → 6-step wizard → 4 evidence uploads → submit → admin verifies 5 checks → approve → listing public; host accepts a request; admin resolves a dispute |
+| `e2e/access.spec.ts` | Signed-out redirects, driver blocked from admin (404), evidence not public, forged webhook rejected, health check |
+| `e2e/mobile.spec.ts` | Pixel 7 viewport: driver pages, host workspace and admin console with no horizontal overflow; map/list toggle |
+
+See [BUILD_STATUS.md](BUILD_STATUS.md) for the latest recorded results.
 
 ---
 
@@ -142,7 +161,9 @@ See [`.env.example`](.env.example). Summary:
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Auth | |
 | `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET` | uploads | Server-only |
 | `AUTH_PROVIDER` | optional | `supabase` (default with a database) or `local` |
-| `PAYMENT_PROVIDER` | payments | `demo` or `razorpay` (razorpay is refused in demo mode) |
+| `PAYMENT_PROVIDER` | payments | `demo` or `razorpay` (razorpay is refused in demo mode; demo is refused outside demo mode) |
+| `ALLOW_DEMO_PAYMENTS` | private staging only | Lets simulated payments run against a real database |
+| `CRON_SECRET` | production | Bearer token for `POST /api/cron/sweep` (expire unpaid holds every ~5 min) |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | live payments | Key id is sent to the browser checkout; the secrets never are |
 | `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_ATTRIBUTION` | production maps | Public OSM tiles are for development only |
 
@@ -156,7 +177,8 @@ See [`.env.example`](.env.example). Summary:
 4. Auth → URL configuration: site URL = your domain; add `https://<domain>/auth/callback` as a redirect URL. Configure SMTP for production emails.
 5. Create your first admin: sign up normally, then in the SQL editor run
    `insert into public.user_roles (user_id, role) select id, 'admin' from auth.users where email = 'you@example.com';`
-6. Deploy to a Node host (Vercel, Render, Railway, a VM). Set the env vars above, plus `SESSION_SECRET`. Use Supabase's pooled connection string for serverless platforms.
+6. Deploy to a Node host (Vercel, Render, Railway, a VM). Set the env vars above, plus `SESSION_SECRET` and `CRON_SECRET`. Use Supabase's pooled connection string for serverless platforms. Schedule `POST /api/cron/sweep` with `Authorization: Bearer $CRON_SECRET` every 5 minutes. `GET /api/health` is a readiness probe.
+   - Plain Postgres instead of Supabase: set `AUTH_PROVIDER=local`; `npm run db:migrate` then also applies the local auth shim.
 7. The demo seed is not run against Supabase. Real listings come from real hosts through the onboarding flow.
 
 Notes: the embedded PGlite database is single-process and for demo/testing only; do not use demo mode as a production datastore. Transactional emails other than Supabase Auth's (booking confirmations etc.) are currently written to the `notifications` table with `channel = 'email'`; connect an email provider (Resend, SES, etc.) to deliver them.
@@ -174,7 +196,7 @@ Code is in `src/lib/payments/razorpay.ts`, `src/app/api/payments/razorpay/verify
 - [ ] Decide on payment capture settings (auto-capture recommended for instant book).
 - [ ] Replace estimated gateway fees and GST with figures from Razorpay settlement reports; confirm GST treatment of commission (and whether TCS/TDS applies to marketplace payouts) with a chartered accountant.
 - [ ] Decide on payouts: keep manual transfers with a reconciliation process, or apply for Razorpay Route for split settlements. Do not assume Route is available.
-- [ ] Generate invoices/receipts for drivers and commission invoices for hosts.
+- [ ] Turn the driver receipt (`/bookings/[id]/receipt`, currently "not a tax invoice") into GST-compliant invoices once registered, and add commission invoices for hosts.
 - [ ] Switch to live keys only after the above; keep secrets in your host's secret manager.
 
 ---
@@ -197,8 +219,8 @@ Before accepting real bookings and launching publicly:
 - Clarify electricity-utility (TNPDCL/TANGEDCO) rules on reselling charging time from domestic/commercial connections and CEA EV charging guidelines; require appropriate tariff categories where needed.
 - Resident-association / property-manager permission templates (NOC) for apartment hosts.
 - A real verification operation: trained reviewers, document retention policy, periodic re-verification (electrical reports expire after 12 months; not yet automated).
-- Rate limiting on auth and booking endpoints, bot protection on sign-up, email verification enforcement, 2FA for admins.
-- Background jobs: hold expiry currently happens lazily on the next booking attempt for that charger; add a scheduled job for timely expiry, request reminders, and auto-escalation of unconfirmed sessions.
+- Bot protection on sign-up, email verification enforcement, 2FA for admins (rate limiting is implemented). See [SECURITY.md](SECURITY.md).
+- Background jobs: hold expiry runs lazily, through a throttled sweep and via the cron endpoint; still to add: request reminders to hosts, and auto-escalation of sessions the host never marks complete.
 - Observability (error tracking, structured logs, payment reconciliation alerts) and database backups.
 - Accessibility audit and real-device mobile testing; real photography in place of illustrated covers.
 

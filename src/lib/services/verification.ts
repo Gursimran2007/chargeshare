@@ -1,5 +1,6 @@
 import { AppError } from "@/lib/errors";
 import { audit, notify, requireActive, requireRole, type Actor, type Db } from "./common";
+import { cancelUpcomingForListings, type ProviderFor } from "./bookings";
 
 export type CheckType = "identity" | "property_permission" | "charger_spec" | "installation_evidence" | "electrical_safety";
 export type Decision = "verified" | "needs_info" | "rejected" | "suspended";
@@ -13,7 +14,7 @@ export const CHECK_INFO: Record<CheckType, { title: string; what: string; eviden
   property_permission: {
     title: "Property permission",
     what: "Confirms the host owns the parking space or has written permission to offer it.",
-    evidence: "Ownership/lease document, or a signed NOC from the resident welfare association or property manager.",
+    evidence: "Ownership/lease document, or a signed NOC from the resident welfare association or property manager, plus a recent electricity bill showing the connection's tariff category.",
   },
   charger_spec: {
     title: "Charger specification",
@@ -74,6 +75,7 @@ export async function reviewVerification(
   verificationId: string,
   decision: Decision,
   reason: string,
+  providerFor?: ProviderFor,
 ) {
   requireRole(actor, "admin");
   if (decision !== "verified" && reason.trim().length < 5) {
@@ -103,6 +105,7 @@ export async function reviewVerification(
           `Verification ${decision}: ${CHECK_INFO[v.check_type].title}`,
         ]);
       }
+      await cancelUpcomingForListings(q, affected.rows.map((l) => l.id), `${CHECK_INFO[v.check_type].title} check ${decision}`, actor.userId, providerFor);
     }
     if (decision === "needs_info" && v.listing_id) {
       await q.query("update public.charger_listings set status = 'changes_requested' where id = $1 and status = 'pending_review'", [
@@ -160,6 +163,7 @@ export async function moderateListing(
   listingId: string,
   action: "reject" | "suspend" | "request_changes",
   reason: string,
+  providerFor?: ProviderFor,
 ) {
   requireRole(actor, "admin");
   if (reason.trim().length < 5) throw new AppError("invalid", "A reason is required.");
@@ -177,9 +181,10 @@ export async function moderateListing(
        where id = $1`,
       [listingId, status, reason.trim()],
     );
+    const cascade = status === "suspended" ? await cancelUpcomingForListings(q, [listingId], reason.trim(), actor.userId, providerFor) : null;
     await audit(q, actor.userId, `listing.${action}`, "listing", listingId, {
       before: { status: rows[0].status },
-      after: { status },
+      after: { status, cancelledBookings: cascade?.cancelled ?? 0, inProgressSessions: cascade?.inProgress ?? 0 },
       reason,
     });
     await notify(q, rows[0].host_id, {

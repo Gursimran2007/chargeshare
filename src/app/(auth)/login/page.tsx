@@ -11,8 +11,10 @@ export const metadata = { title: "Sign in" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const sp = await searchParams;
-  const next = typeof sp.next === "string" ? sp.next : "/dashboard";
-  if (await getViewer()) redirect(next.startsWith("/") ? next : "/dashboard");
+  const raw = typeof sp.next === "string" ? sp.next : "/dashboard";
+  // Same-site relative paths only ("//host" would be an open redirect).
+  const next = raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\") ? raw : "/dashboard";
+  if (await getViewer()) redirect(next);
   return (
     <AuthShell
       title="Welcome back"

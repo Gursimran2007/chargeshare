@@ -7,7 +7,7 @@ import { ListingStatusPill, VerificationPill } from "@/components/domain";
 import { HostNav } from "../../host-nav";
 import { VerificationForm } from "../../verification-form";
 import { ListingWizard } from "../listing-wizard";
-import { blockTimeAction, deletePhotoAction, pauseAction, photoAction, submitReviewAction, unblockAction } from "../../actions";
+import { blockTimeAction, deletePhotoAction, pauseAction, photoAction, replyReviewAction, submitReviewAction, unblockAction } from "../../actions";
 import { getDb } from "@/lib/db";
 import { requireRolePage } from "@/lib/auth";
 import { CHECK_INFO, type CheckType } from "@/lib/services/verification";
@@ -16,7 +16,10 @@ import { formatDate, formatDateTime, localDateString } from "@/lib/domain/time";
 export const metadata = { title: "Manage listing" };
 
 const DETAIL_FIELDS: Record<string, { name: string; label: string; placeholder?: string }[]> = {
-  property_permission: [{ name: "relationship", label: "Your relationship to the property", placeholder: "Owner / tenant / RWA office-bearer / manager" }],
+  property_permission: [
+    { name: "relationship", label: "Your relationship to the property", placeholder: "Owner / tenant / RWA office-bearer / manager" },
+    { name: "connection_category", label: "Electricity connection & tariff category (as on the bill)", placeholder: "e.g. LT domestic, LT commercial, separate EV meter" },
+  ],
   charger_spec: [
     { name: "serial_number", label: "Serial number (from rating plate)" },
     { name: "purchase_date", label: "Purchase date", placeholder: "YYYY-MM" },
@@ -36,7 +39,7 @@ export default async function ManageListingPage({ params }: PageProps<"/host/lis
   );
   const l = rows[0];
   if (!l || l.host_id !== viewer.userId) notFound();
-  const [{ rows: checks }, { rows: photos }, { rows: rules }, { rows: blocked }, { rows: connectors }] = await Promise.all([
+  const [{ rows: checks }, { rows: photos }, { rows: rules }, { rows: blocked }, { rows: connectors }, { rows: reviews }] = await Promise.all([
     db.query<{ id: string; check_type: CheckType; status: string; decision_reason: string | null; is_simulated: boolean; submitted_at: Date | null; reviewed_at: Date | null; evidence_paths: string[] }>(
       `select id, check_type, status, decision_reason, is_simulated, submitted_at, reviewed_at, evidence_paths from public.charger_verifications
         where listing_id = $1 or (host_id = $2 and check_type = 'identity')
@@ -50,6 +53,11 @@ export default async function ManageListingPage({ params }: PageProps<"/host/lis
     ),
     db.query<{ id: string; start_at: Date; end_at: Date; reason: string }>("select id, start_at, end_at, reason from public.blocked_times where listing_id = $1 and end_at > now() order by start_at", [id]),
     db.query<{ code: string; label: string; listable: boolean; max_kw: number; description: string }>("select code, label, listable, max_kw, description from public.connector_types order by sort_order"),
+    db.query<{ id: string; rating: number; comment: string; host_reply: string | null; created_at: Date; author: string }>(
+      `select r.id, r.rating, r.comment, r.host_reply, r.created_at, split_part(p.full_name, ' ', 1) as author
+         from public.reviews r join public.profiles p on p.id = r.author_id where r.listing_id = $1 order by r.created_at desc limit 20`,
+      [id],
+    ),
   ]);
   const initial = {
     title: l.title, description: l.description as string, propertyType: l.property_type as never, connectorType: l.connector_type as string,
@@ -157,6 +165,25 @@ export default async function ManageListingPage({ params }: PageProps<"/host/lis
               </select>
               <input name="photos" type="file" multiple accept="image/jpeg,image/png,image/webp" aria-label="Choose photos" className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white" />
             </ActionForm>
+          </Card>
+          <Card className="p-5">
+            <h2 className="font-semibold">Reviews</h2>
+            <ul className="mt-3 space-y-4">
+              {reviews.map((r) => (
+                <li key={r.id} className="text-sm">
+                  <div className="flex justify-between"><span className="font-medium">{r.author || "Driver"} · {r.rating}/5</span><span className="text-xs text-ink-400">{formatDate(r.created_at)}</span></div>
+                  {r.comment ? <p className="mt-1 text-ink-600">{r.comment}</p> : null}
+                  {r.host_reply ? (
+                    <p className="mt-2 rounded-lg bg-ink-50 p-2 text-xs"><strong>Your reply:</strong> {r.host_reply}</p>
+                  ) : (
+                    <ActionForm action={replyReviewAction} hidden={{ reviewId: r.id }} submit="Reply publicly" variant="ghost" resetOnSuccess className="mt-2">
+                      <Input name="reply" aria-label={`Reply to ${r.author}'s review`} maxLength={1000} placeholder="Thank the driver or respond to feedback" />
+                    </ActionForm>
+                  )}
+                </li>
+              ))}
+              {!reviews.length ? <li className="text-sm text-ink-500">No reviews yet. Drivers can review after a completed session.</li> : null}
+            </ul>
           </Card>
           <Card className="p-5">
             <h2 className="flex items-center gap-2 font-semibold"><CalendarOff className="size-5 text-volt-600" aria-hidden /> Block dates & times</h2>

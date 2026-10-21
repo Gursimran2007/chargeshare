@@ -24,3 +24,24 @@ test("mobile: landing, map toggle, listing and dashboard fit a phone screen", as
     await expectNoHorizontalScroll(page);
   }
 });
+
+test("mobile: host workspace and admin console fit a phone screen", async ({ page, browser }) => {
+  await signIn(page, "host@chargeshare.demo", "/host");
+  for (const p of ["/host", "/host/bookings", "/host/earnings", "/host/onboarding", "/host/listings/new"]) {
+    await page.goto(p);
+    await expectNoHorizontalScroll(page);
+  }
+  await page.goto("/host");
+  await page.getByRole("link", { name: /Adyar bridge/ }).first().click();
+  await expect(page.getByText("Verification checks")).toBeVisible();
+  await expectNoHorizontalScroll(page);
+
+  const ctx = await browser.newContext({ viewport: page.viewportSize(), isMobile: true, hasTouch: true });
+  const admin = await ctx.newPage();
+  await signIn(admin, "admin@chargeshare.demo", "/admin");
+  for (const p of ["/admin", "/admin/verifications", "/admin/bookings", "/admin/payouts", "/admin/users", "/admin/support", "/admin/audit"]) {
+    await admin.goto(p);
+    await expectNoHorizontalScroll(admin);
+  }
+  await ctx.close();
+});

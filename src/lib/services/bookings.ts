@@ -149,6 +149,14 @@ export async function createBooking(db: Db, actor: Actor | null, req: BookingReq
       const vehicle = await loadVehicle(q, req.vehicleId, actor.userId);
       if (!vehicle) throw new AppError("invalid", "Vehicle not found.");
       await expireStale(q, listing.id, now);
+      // Anti-griefing: a driver cannot sit on many unpaid or unanswered slots at once.
+      const { rows: holds } = await q.query<{ n: number }>(
+        "select count(*)::int as n from public.bookings where driver_id = $1 and status in ('pending_payment', 'requested') and hold_expires_at > $2",
+        [actor.userId, now],
+      );
+      if (holds[0].n >= MAX_OPEN_HOLDS) {
+        throw new AppError("invalid", "You have several unpaid or pending requests. Pay for or cancel one before booking another.");
+      }
       const quote = await quoteBooking(q, actor.userId, req, now);
       if (!quote.compatibility?.compatible) {
         throw new AppError("invalid", quote.compatibility?.reasons[0] ?? "Your vehicle is not compatible with this charger.");
@@ -412,6 +420,71 @@ export async function resolveDispute(
     return { refund };
   });
 }
+
+export type ProviderFor = (name: string) => PaymentProvider;
+
+/**
+ * Safety cascade: when listings are suspended, cancel their upcoming bookings so no
+ * driver is sent to a charger under investigation. Paid bookings are refunded in full.
+ * Sessions already in progress are left alone and flagged to admins.
+ */
+export async function cancelUpcomingForListings(
+  q: Queryable,
+  listingIds: string[],
+  reason: string,
+  actorId: string | null,
+  providerFor: ProviderFor | undefined,
+  now = new Date(),
+) {
+  if (!listingIds.length) return { cancelled: 0, inProgress: 0 };
+  const { rows } = await q.query<BookingRow>(
+    `select * from public.bookings where listing_id = any($1) and end_at > $2
+        and status in ('requested', 'pending_payment', 'confirmed', 'checked_in', 'in_progress')
+      order by start_at for update`,
+    [listingIds, now],
+  );
+  let cancelled = 0;
+  let inProgress = 0;
+  for (const b of rows) {
+    if (b.status === "in_progress") {
+      inProgress++;
+      continue;
+    }
+    const paid = b.status === "confirmed" || b.status === "checked_in";
+    await transition(q, b, "cancelled", actorId ? ({ userId: actorId, roles: ["admin"] } as Actor) : null, actorId ? "admin" : "system", reason, {
+      cancelled_at: now,
+      cancelled_by: actorId ? "admin" : "system",
+      cancel_reason: reason,
+    });
+    if (paid) {
+      const { rows: p } = await q.query<{ provider: string }>(
+        "select provider from public.payments where booking_id = $1 and status = 'captured' limit 1",
+        [b.id],
+      );
+      if (p[0]) {
+        if (!providerFor) throw new Error("cancelUpcomingForListings needs a payment provider resolver to refund paid bookings");
+        await issueRefund(q, providerFor(p[0].provider), {
+          booking: b,
+          amountPaise: b.amount_paise,
+          reason: `Listing suspended: ${reason}`,
+          actorId,
+          role: actorId ? "admin" : "system",
+        });
+      }
+    }
+    await notify(q, b.driver_id, {
+      type: "booking_cancelled",
+      title: `Booking ${b.code} cancelled by ChargeShare`,
+      body: `This charger has been taken offline for a safety or compliance review.${paid ? " You will receive a full refund." : " You have not been charged."}`,
+      link: `/bookings/${b.id}`,
+      email: true,
+    });
+    cancelled++;
+  }
+  return { cancelled, inProgress };
+}
+
+const MAX_OPEN_HOLDS = 3;
 
 const CONTACT_PATTERN = /(\+?\d[\d\s-]{7,}\d)|([\w.+-]+@[\w-]+\.[\w.]+)/g;
 

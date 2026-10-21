@@ -130,6 +130,7 @@ export interface PlatformMetrics {
   utilisationNote: string;
   funnel: { searchVisitors: number; listingVisitors: number; bookingVisitors: number; searchToListing: number | null; listingToBooking: number | null };
   hostResponseMedianMinutes: number | null;
+  hostCancellationRate: number | null;
   bookingCompletionRate: number | null;
   demoShare: { bookings: number; listings: number };
 }
@@ -197,6 +198,10 @@ export async function platformMetrics(q: Queryable): Promise<PlatformMetrics> {
       where b.end_at < now() and exists (select 1 from public.booking_events e where e.booking_id = b.id and e.to_status = 'confirmed')
         and b.status <> 'cancelled'`,
   );
+  const { rows: hc } = await q.query<{ host: number; confirmed: number }>(
+    `select count(*) filter (where b.status = 'cancelled' and b.cancelled_by = 'host')::int as host, count(*)::int as confirmed
+       from public.bookings b where exists (select 1 from public.booking_events e where e.booking_id = b.id and e.to_status = 'confirmed')`,
+  );
   const demoBookings = await one("select count(*)::int as n from public.bookings where is_demo");
   const demoListings = await one("select count(*)::int as n from public.charger_listings where is_demo");
   return {
@@ -232,6 +237,7 @@ export async function platformMetrics(q: Queryable): Promise<PlatformMetrics> {
       listingToBooking: ratio(f[0].b, f[0].l),
     },
     hostResponseMedianMinutes: resp[0].m === null ? null : Math.round(resp[0].m),
+    hostCancellationRate: ratio(hc[0].host, hc[0].confirmed),
     bookingCompletionRate: ratio(comp[0].done, comp[0].due),
   };
 }
