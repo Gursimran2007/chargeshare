@@ -33,8 +33,31 @@ export default async function AdminBookings() {
     "select event_type, outcome, received_at, provider from public.payment_events order by received_at desc limit 10",
   );
   const disputes = rows.filter((b) => b.status === "disputed");
+  const { rows: unconfirmed } = await db.query<{ id: string; code: string; status: BookingStatus; end_at: Date; title: string; host: string; escalated_at: Date }>(
+    `select b.id, b.code, b.status, b.end_at, l.title, h.display_name as host, b.escalated_at
+       from public.bookings b join public.charger_listings l on l.id = b.listing_id join public.host_profiles h on h.user_id = b.host_id
+      where b.escalated_at is not null and b.status in ('confirmed', 'checked_in', 'in_progress') order by b.end_at`,
+  );
   return (
     <div className="space-y-8">
+      {unconfirmed.length ? (
+        <section>
+          <h1 className="mb-2 text-2xl font-semibold">Needs attention</h1>
+          <p className="mb-4 text-sm text-ink-500">Slots that ended over 2 hours ago without the host confirming the outcome. Host payouts for these stay pending. Open each booking to complete it, cancel and refund, or contact both parties.</p>
+          <ul className="divide-y divide-ink-100 rounded-xl border border-warn-600/30 bg-white">
+            {unconfirmed.map((b) => (
+              <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+                <div>
+                  <Link href={`/bookings/${b.id}`} className="font-semibold text-volt-700 hover:underline">{b.code}</Link>
+                  <span className="text-ink-500"> · {b.title} · host {b.host}</span>
+                  <div className="text-xs text-ink-500">Slot ended {formatDateTime(b.end_at)} · escalated {formatDateTime(b.escalated_at)}</div>
+                </div>
+                <BookingStatusPill status={b.status} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <section>
         <h1 className="mb-4 text-2xl font-semibold">Disputes</h1>
         {disputes.length ? (

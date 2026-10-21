@@ -19,3 +19,15 @@ export async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 }
+
+/**
+ * Records Content-Security-Policy violations on every page the test opens.
+ * Call once at the start of a test, then `await expectNoCspViolations()` at the end.
+ */
+export function watchCsp(page: Page) {
+  const violations: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error" && /Content Security Policy/i.test(m.text())) violations.push(m.text());
+  });
+  return async () => expect(violations, violations.join("\n")).toEqual([]);
+}

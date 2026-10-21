@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { MapPin, ShieldCheck } from "lucide-react";
 import { Card, Container, PageHeader } from "@/components/ui";
 import { DemoBadge, ListingPhoto } from "@/components/domain";
@@ -69,6 +70,7 @@ export default async function CheckoutPage({ params }: PageProps<"/checkout/[id]
                 amountPaise={b.amount_paise}
                 holdUntil={b.hold_expires_at ? new Date(b.hold_expires_at).toISOString() : null}
                 provider={mode.provider}
+                nonce={(await headers()).get("x-nonce") ?? undefined}
                 prefill={{ name: viewer.fullName, email: viewer.email }}
               />
             ) : (

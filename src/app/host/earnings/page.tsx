@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import { Container, PageHeader, Stat, Card, Badge } from "@/components/ui";
 import { HostNav } from "../host-nav";
 import { getDb } from "@/lib/db";
@@ -26,7 +27,17 @@ export default async function EarningsPage() {
   );
   return (
     <Container className="py-8 sm:py-12">
-      <PageHeader eyebrow="Host" title="Earnings" subtitle="Every figure below is computed from an append-only ledger. Hosts cannot edit payment or payout records." />
+      <PageHeader
+        eyebrow="Host"
+        title="Earnings"
+        subtitle="Every figure below is computed from an append-only ledger. Hosts cannot edit payment or payout records."
+        actions={
+          // A plain link: the browser downloads the CSV from the route handler.
+          <a href="/api/host/exports/earnings" className="inline-flex h-10 items-center gap-2 rounded-xl border border-ink-200 bg-white px-4 text-sm font-semibold hover:bg-ink-50">
+            <Download className="size-4" aria-hidden /> Download statement (CSV)
+          </a>
+        }
+      />
       <HostNav />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Gross booking value" value={formatINR(e.grossBookingPaise)} hint="What drivers paid for your sessions" />

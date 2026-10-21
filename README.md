@@ -91,10 +91,10 @@ docs/                     decisions, research, pilot plan, metrics
 Sign up / sign in / password reset · printable receipts · vehicle profiles with an indicative catalogue of Indian EVs · map + list discovery with locality search, "near me", filters (connector, power, price, access type, instant book, availability on a date/time, compatible with my vehicle) · listing pages with approximate location, specs, hours, five-check verification panel, cancellation policy, reviews · live slot picker, server-computed quote, compatibility and charge estimate · instant book or request-to-book · checkout with a slot-hold countdown · confirmation with exact address, access instructions and directions · upcoming/past bookings · policy-based cancellation with automatic refund · check-in · privacy-masked messaging · disputes within 72 hours · reviews after completion · support tickets and safety reports · notifications.
 
 ### Host
-Host profile · identity verification with document upload · self-declared safety checklist · six-step listing wizard (charger, location, access, pricing and rules, weekly availability) · photo uploads (public listing photos vs reviewer-only installation photos) · per-listing evidence for property permission, charger spec, installation and electrical safety · submit for review, pause/resume · blocked dates · request accept/decline · weekly calendar · session start/complete · earnings from the ledger (gross, commission, refunds, net, pending, held, paid out, available) · payout history.
+Downloadable earnings statement (CSV) · host profile · identity verification with document upload · self-declared safety checklist · six-step listing wizard (charger, location, access, pricing and rules, weekly availability) · photo uploads (public listing photos vs reviewer-only installation photos) · per-listing evidence for property permission, charger spec, installation and electrical safety · submit for review, pause/resume · blocked dates · request accept/decline · weekly calendar · session start/complete · earnings from the ledger (gross, commission, refunds, net, pending, held, paid out, available) · payout history.
 
 ### Admin (server-enforced; non-admins get 404)
-Analytics (drivers, hosts, listings submitted/approved/active, booking requests, completed sessions, conversion, repeat rate, cancellation and refund rates, GBV, commission, estimated net contribution, payout liability, utilisation only when there are ≥10 recent sessions; seeded data is flagged) · verification queue with per-check decisions and reasons · listing approval, rejection, change requests, suspension · bookings and payments oversight, partial/full refunds, dispute resolution · payouts · user restriction · support tickets and incident reports with severity triage · commission configuration · append-only audit log.
+Analytics (drivers, hosts, listings submitted/approved/active, booking requests, completed sessions, conversion, repeat rate, cancellation and refund rates, GBV, commission, estimated net contribution, payout liability, utilisation only when there are ≥10 recent sessions; seeded data is flagged) · verification queue with per-check decisions and reasons · listing approval, rejection, change requests, suspension · bookings and payments oversight, partial/full refunds, dispute resolution · payouts · user restriction · support tickets and incident reports with severity triage · commission configuration · finance CSV exports (ledger, bookings, refunds, payouts; audited) · "needs attention" queue for sessions that ended without host confirmation · append-only audit log.
 
 ### Booking engine
 States: `requested → pending_payment → confirmed → checked_in → in_progress → completed`, plus `declined`, `expired`, `cancelled`, `disputed`, `refunded`. Every transition is validated and written to `booking_events`.
@@ -114,6 +114,10 @@ Statuses: not submitted, pending review, needs info, verified, rejected, suspend
 
 ---
 
+## Continuous integration
+
+`.github/workflows/chargeshare-ci.yml` (at the repository root) runs on changes under this directory: `npm ci` → `npm audit --omit=dev --audit-level=high` → `npm run check` → `npm run build`, then the Playwright suite against the Chrome preinstalled on GitHub's Ubuntu runners. Traces are uploaded on failure. Verified locally on a clean copy; it has not yet run on GitHub (the branch is not pushed).
+
 ## Commands
 
 ```bash
@@ -122,8 +126,8 @@ npm run build        # production build
 npm run start        # serve the production build (requires SESSION_SECRET)
 npm run lint
 npm run typecheck
-npm test             # 73 unit/integration tests against in-memory Postgres
-npm run test:e2e     # production build + 10 browser journeys (needs Google Chrome installed)
+npm test             # 85 unit/integration tests against in-memory Postgres
+npm run test:e2e     # production build + 13 browser journeys (needs Google Chrome installed)
 npm run check        # lint + typecheck + test
 npm run db:migrate   # apply migrations to DATABASE_URL (Supabase)
 npm run demo:reset   # wipe the embedded demo database and uploads
@@ -142,7 +146,9 @@ npm run demo:reset   # wipe the embedded demo database and uploads
 | `tests/ops.test.ts` | Payment-mode guard (no simulated payments outside demo), rate limiting, platform-wide hold expiry, funnel metrics |
 | `e2e/driver.spec.ts` | Real browser: search → slot → demo pay → confirmation → receipt → cancel/refund; simulated failure then retry |
 | `e2e/host-admin.spec.ts` | Sign up as host → profile → identity evidence → checklist → 6-step wizard → 4 evidence uploads → submit → admin verifies 5 checks → approve → listing public; host accepts a request; admin resolves a dispute |
-| `e2e/access.spec.ts` | Signed-out redirects, driver blocked from admin (404), evidence not public, forged webhook rejected, health check |
+| `tests/exports.test.ts` | CSV escaping and formula-injection guard, ledger export reconciles to the paisa, date ranges, admin-only exports, host statement limited to own lines |
+| `tests/csp.test.ts` | CSP: nonce + strict-dynamic, no unsafe scripts in production, framing blocked, tile and Razorpay origins |
+| `e2e/access.spec.ts` | Signed-out redirects, driver blocked from admin (404), CSP nonce applied and rotated, admin CSV download, host statement download, evidence not public, forged webhook rejected, health check |
 | `e2e/mobile.spec.ts` | Pixel 7 viewport: driver pages, host workspace and admin console with no horizontal overflow; map/list toggle |
 
 See [BUILD_STATUS.md](BUILD_STATUS.md) for the latest recorded results.
@@ -163,7 +169,7 @@ See [`.env.example`](.env.example). Summary:
 | `AUTH_PROVIDER` | optional | `supabase` (default with a database) or `local` |
 | `PAYMENT_PROVIDER` | payments | `demo` or `razorpay` (razorpay is refused in demo mode; demo is refused outside demo mode) |
 | `ALLOW_DEMO_PAYMENTS` | private staging only | Lets simulated payments run against a real database |
-| `CRON_SECRET` | production | Bearer token for `POST /api/cron/sweep` (expire unpaid holds every ~5 min) |
+| `CRON_SECRET` | production | Bearer token for `POST /api/cron/sweep`: expire holds, remind hosts, escalate unconfirmed sessions (every ~5 min) |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | live payments | Key id is sent to the browser checkout; the secrets never are |
 | `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_ATTRIBUTION` | production maps | Public OSM tiles are for development only |
 
@@ -220,7 +226,7 @@ Before accepting real bookings and launching publicly:
 - Resident-association / property-manager permission templates (NOC) for apartment hosts.
 - A real verification operation: trained reviewers, document retention policy, periodic re-verification (electrical reports expire after 12 months; not yet automated).
 - Bot protection on sign-up, email verification enforcement, 2FA for admins (rate limiting is implemented). See [SECURITY.md](SECURITY.md).
-- Background jobs: hold expiry runs lazily, through a throttled sweep and via the cron endpoint; still to add: request reminders to hosts, and auto-escalation of sessions the host never marks complete.
+- Background jobs run as idempotent maintenance steps (hold expiry, host request reminders, escalation of unconfirmed sessions) on page loads and via the cron endpoint; a real scheduler must call `/api/cron/sweep` in production.
 - Observability (error tracking, structured logs, payment reconciliation alerts) and database backups.
 - Accessibility audit and real-device mobile testing; real photography in place of illustrated covers.
 

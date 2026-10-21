@@ -56,3 +56,16 @@ Every page is per-user and dynamic, so opting out kept the auth code simple. Rev
 
 ### D16. Toasts fire from the action continuation, not from an effect
 A server re-render often removes the form that submitted it (e.g. "Accept request"), so effect-based toasts were silently lost. `withToast()` wraps the action instead.
+
+### D17. Nonce-based CSP in the proxy
+Each HTML request gets a fresh nonce and `script-src 'self' 'nonce-…' 'strict-dynamic'`. Next.js applies the nonce to its own scripts, and Razorpay's checkout loader is trusted through `strict-dynamic`. Styles keep `'unsafe-inline'`. Tile and Razorpay origins come from configuration (`src/lib/csp.ts`, unit-tested). Every E2E journey fails on any CSP violation, so a new third-party script can't be added without updating the policy.
+
+### D18. Follow-ups are idempotent maintenance steps, not a job queue
+`runMaintenance()` expires holds, reminds hosts at 50% of the request window (`host_reminded_at`), and escalates sessions still unconfirmed 2 h after the slot ends (`escalated_at`). It alerts admins, asks the host to confirm and tells the driver how to dispute. Each step marks its rows so it acts once. It runs throttled on page loads and from `/api/cron/sweep`.
+**Revisit when:** volume needs retries/backoff (then use a queue such as pg-boss or Supabase cron).
+
+### D19. Finance exports as CSV route handlers
+Admin exports (ledger, bookings, refunds, payouts; IST date range) are audited. The host statement runs as the host so RLS scopes it. Amounts are written as numeric rupees; text cells are protected against formula injection.
+
+### D20. CI from the repository root, scoped to the project
+`.github/workflows/chargeshare-ci.yml` (at the repo root, since this app lives in a subdirectory) runs `npm ci`, a production dependency audit, `npm run check` and `npm run build`, then the Playwright suite against the runner's preinstalled Chrome. It is verified locally on a clean copy; it has not yet run on GitHub.

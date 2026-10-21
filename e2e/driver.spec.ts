@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { istDate, signIn } from "./helpers";
+import { istDate, signIn, watchCsp } from "./helpers";
 
 test("driver: search → compatible slot → demo payment → confirmation → receipt → cancel with refund", async ({ page }) => {
+  const expectNoCspViolations = watchCsp(page);
   await signIn(page, "driver@chargeshare.demo");
   await page.goto("/chargers?q=Besant%20Nagar");
   await expect(page.getByRole("heading", { name: "Chargers near Besant Nagar" })).toBeVisible();
@@ -36,6 +37,7 @@ test("driver: search → compatible slot → demo payment → confirmation → r
   await page.getByRole("button", { name: "Yes, cancel" }).click();
   await expect(page.getByText("Refund (processed)")).toBeVisible();
   await expect(page.getByText("Cancelled", { exact: true }).first()).toBeVisible();
+  await expectNoCspViolations();
 });
 
 test("driver: a simulated payment failure leaves the booking unpaid and retryable", async ({ page }) => {

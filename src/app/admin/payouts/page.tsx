@@ -1,6 +1,7 @@
 import { ActionForm } from "@/components/action-form";
 import { Badge, Card, Field, Input, Select } from "@/components/ui";
 import { createPayoutAction, payoutStatusAction } from "../actions";
+import { ExportForm } from "./export-form";
 import { getDb } from "@/lib/db";
 import { hostEarnings } from "@/lib/services/finance";
 import { formatINR } from "@/lib/money";
@@ -45,6 +46,11 @@ export default async function AdminPayouts() {
           </tbody>
         </table>
       </div>
+      <section>
+        <h2 className="mb-1 text-lg font-semibold">Finance exports</h2>
+        <p className="mb-3 text-sm text-ink-500">CSV files for reconciliation and your accountant. Amounts in ₹, timestamps in UTC; demo rows are flagged. Every export is recorded in the audit log.</p>
+        <Card className="p-4"><ExportForm /></Card>
+      </section>
       <section>
         <h2 className="mb-3 text-lg font-semibold">Payout history</h2>
         <div className="grid gap-3">

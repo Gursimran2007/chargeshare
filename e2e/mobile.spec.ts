@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { expectNoHorizontalScroll, signIn } from "./helpers";
+import { expectNoHorizontalScroll, signIn, watchCsp } from "./helpers";
 
 test("mobile: landing, map toggle, listing and dashboard fit a phone screen", async ({ page }) => {
+  const expectNoCspViolations = watchCsp(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Your next charge is/ })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
@@ -23,6 +24,7 @@ test("mobile: landing, map toggle, listing and dashboard fit a phone screen", as
     await page.goto(p);
     await expectNoHorizontalScroll(page);
   }
+  await expectNoCspViolations();
 });
 
 test("mobile: host workspace and admin console fit a phone screen", async ({ page, browser }) => {

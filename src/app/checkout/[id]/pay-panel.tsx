@@ -33,12 +33,14 @@ export function PayPanel({
   holdUntil,
   provider,
   prefill,
+  nonce,
 }: {
   bookingId: string;
   amountPaise: number;
   holdUntil: string | null;
   provider: "demo" | "razorpay";
   prefill: { name: string; email: string };
+  nonce?: string;
 }) {
   const router = useRouter();
   const [order, setOrder] = useState<{ orderId: string; keyId: string | null } | null>(null);
@@ -95,7 +97,7 @@ export function PayPanel({
 
   return (
     <div className="space-y-4">
-      {provider === "razorpay" ? <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" /> : null}
+      {provider === "razorpay" ? <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" nonce={nonce} /> : null}
       {left !== null ? (
         <div className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${expired ? "bg-stop-100 text-stop-600" : "bg-volt-50 text-volt-700"}`}>
           <TimerReset className="size-4" aria-hidden />

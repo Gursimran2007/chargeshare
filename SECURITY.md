@@ -23,16 +23,18 @@ This file records an adversarial self-review done during the build. It is not an
 | Open redirects? | `next` parameter restricted to same-site paths (rejects `//` and `/\`) | code review |
 | Dangerous listing with future bookings? | Suspension cancels and refunds upcoming bookings | `bookings.test.ts` |
 | Secret exposure? | Secrets are server-only env vars; `.env*` ignored except `.env.example`; error messages to users are generic, with details logged server-side | code review |
+| XSS / script injection? | React escaping; no `dangerouslySetInnerHTML`; nonce-based CSP with `'strict-dynamic'` (no inline or eval scripts in production), `frame-ancestors 'none'`, `object-src 'none'`, `form-action 'self'` | `tests/csp.test.ts`, `e2e/access.spec.ts` (nonce applied, rotates per request); E2E journeys fail on any CSP violation |
+| Spreadsheet formula injection in finance exports? | Text cells beginning with `= + - @` are prefixed with `'`; numbers stay numeric; exports are admin-only (hosts get their own RLS-scoped statement) and every export is audited | `tests/exports.test.ts`, `e2e/access.spec.ts` |
 | CSRF on server actions? | Next.js server actions check the request Origin; session cookie is `SameSite=Lax`, `HttpOnly` and `Secure` in production | framework |
 
 ## Known gaps (fix before launch)
 
-- No Content-Security-Policy on HTML pages (nonce-based CSP needs Next.js middleware work).
+- CSP keeps `style-src 'unsafe-inline'` (React style attributes and the toast library need it; inline CSS cannot run code).
 - No 2FA for admins. No email verification enforced in local auth (Supabase Auth can enforce it).
 - Sign-up reveals whether an email is registered (it is rate-limited).
 - Rate limits use the first `X-Forwarded-For` hop. Make sure the hosting proxy overwrites that header.
 - Payment provider calls run inside DB transactions. A provider outage holds a row lock until the HTTP timeout.
-- No automated dependency or vulnerability scanning in CI (`npm audit` currently reports advisories in transitive dev dependencies; review before launch).
+- CI blocks on high/critical advisories in **production** dependencies only. `npm audit` reports 5 high advisories in the dev-only ESLint chain (`braces` via `eslint-config-next`); the suggested fix downgrades to v14, so this is tracked rather than forced.
 - No malware scanning of uploaded PDFs.
 - Admin page titles reveal that `/admin` routes exist (the content returns 404).
 
