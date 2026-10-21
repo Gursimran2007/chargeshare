@@ -116,7 +116,9 @@ Statuses: not submitted, pending review, needs info, verified, rejected, suspend
 
 ## Continuous integration
 
-`.github/workflows/chargeshare-ci.yml` (at the repository root) runs on changes under this directory: `npm ci` → `npm audit --omit=dev --audit-level=high` → `npm run check` → `npm run build`, then the Playwright suite against the Chrome preinstalled on GitHub's Ubuntu runners. Traces are uploaded on failure. Verified locally on a clean copy; it has not yet run on GitHub (the branch is not pushed).
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main` and on pull requests: `npm ci` → `npm audit --omit=dev --audit-level=high` → `npm run check` → `npm run build`, then the Playwright suite against the Chrome preinstalled on GitHub's Ubuntu runners. Traces are uploaded on failure.
+
+Repository: [github.com/Gursimran2007/chargeshare](https://github.com/Gursimran2007/chargeshare) (private). The app is developed inside a larger personal monorepo and published here with `git subtree push --prefix="Desktop/my codes/chargeshare" chargeshare main`.
 
 ## Commands
 

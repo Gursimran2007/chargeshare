@@ -49,7 +49,7 @@ _Last updated: 21 October 2026 (session 3)._
   - Formula-injection-safe CSV writer.
   - The ledger export reconciles to the paisa (tested).
 - **CSP:** per-request nonce with `'strict-dynamic'` and no unsafe scripts in production. Framing, plugins and foreign form posts are blocked. Tile and Razorpay origins come from configuration. E2E journeys fail on any violation.
-- **CI:** `.github/workflows/chargeshare-ci.yml` at the repo root, with a check job (`npm ci`, production audit, `check`, `build`) and an E2E job.
+- **CI:** `.github/workflows/ci.yml`, with a check job (`npm ci`, production audit, `check`, `build`) and an E2E job.
 
 ## Known defects / limitations (not fixed)
 
@@ -87,7 +87,8 @@ None of these were attempted, because each requires an account, credentials or s
 ## How to resume without repeating work
 
 ```bash
-cd "Desktop/my codes/chargeshare"
+git clone https://github.com/Gursimran2007/chargeshare.git && cd chargeshare
+# (or, inside the original monorepo: cd "Desktop/my codes/chargeshare")
 npm install
 npm run check          # lint + types + 85 tests (~20 s)
 npm run test:e2e       # build + 13 browser tests (~1–2 min; needs Google Chrome)

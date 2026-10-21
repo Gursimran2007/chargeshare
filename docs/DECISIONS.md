@@ -67,5 +67,5 @@ Each HTML request gets a fresh nonce and `script-src 'self' 'nonce-…' 'strict-
 ### D19. Finance exports as CSV route handlers
 Admin exports (ledger, bookings, refunds, payouts; IST date range) are audited. The host statement runs as the host so RLS scopes it. Amounts are written as numeric rupees; text cells are protected against formula injection.
 
-### D20. CI from the repository root, scoped to the project
-`.github/workflows/chargeshare-ci.yml` (at the repo root, since this app lives in a subdirectory) runs `npm ci`, a production dependency audit, `npm run check` and `npm run build`, then the Playwright suite against the runner's preinstalled Chrome. It is verified locally on a clean copy; it has not yet run on GitHub.
+### D20. Own repository, published by git subtree; CI at its root
+ChargeShare lives in a private repo, `Gursimran2007/chargeshare`. Development happens in a subdirectory of a personal monorepo, and the app folder is published with `git subtree push`, which keeps the project's commit history. `.github/workflows/ci.yml` runs `npm ci`, a production dependency audit, `npm run check` and `npm run build`, then the Playwright suite against the runner's preinstalled Chrome.
