@@ -86,3 +86,6 @@ Uploaded photos are public once a listing is live, and phone photos carry GPS. `
 ### D25. Reconciliation as executable invariants
 `src/lib/services/reconciliation.ts` encodes nine accounting and state invariants as SQL. They run on the admin page and in tests, including after UI-driven refunds in E2E. Matching against provider settlement files is a later step.
 
+### D26. Staging is a local production build on real Supabase + Razorpay test mode
+It is free and private, needs no cloud account beyond Supabase and Razorpay, and exercises Supabase Auth, RLS, Storage and the migrations for real. Demo users are created through the Supabase Auth admin API. The scripts refuse live Razorpay keys and non-localhost URLs, and `--reset` refuses to touch non-test accounts. Not covered: Razorpay webhooks, which need a public URL, i.e. a cloud deploy or tunnel (a founder decision).
+

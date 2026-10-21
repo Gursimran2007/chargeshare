@@ -14,7 +14,12 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "demo:reset": "tsx scripts/reset-demo.ts",
     "test:e2e": "next build && playwright test",
-    "admin:grant": "tsx scripts/grant-admin.ts"
+    "admin:grant": "tsx scripts/grant-admin.ts",
+    "staging:check": "tsx --env-file=.env.staging.local scripts/staging-check.ts",
+    "staging:seed": "tsx --env-file=.env.staging.local scripts/staging-seed.ts",
+    "staging:build": "node --env-file=.env.staging.local node_modules/next/dist/bin/next build",
+    "staging:start": "node --env-file=.env.staging.local node_modules/next/dist/bin/next start -p 3260",
+    "test:e2e:staging": "E2E_BASE_URL=http://localhost:3260 playwright test"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.11",

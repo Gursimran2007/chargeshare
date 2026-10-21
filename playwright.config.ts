@@ -6,6 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
  *   npm run test:e2e
  */
 const PORT = 3250;
+// Set E2E_BASE_URL to test an already-running environment (e.g. local staging on Supabase).
+const EXTERNAL = process.env.E2E_BASE_URL;
 
 export default defineConfig({
   testDir: "e2e",
@@ -16,7 +18,7 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: EXTERNAL ?? `http://localhost:${PORT}`,
     channel: process.env.E2E_BROWSER_CHANNEL ?? "chrome",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -25,7 +27,9 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"], channel: process.env.E2E_BROWSER_CHANNEL ?? "chrome" }, testIgnore: /mobile/ },
     { name: "mobile", use: { ...devices["Pixel 7"], channel: process.env.E2E_BROWSER_CHANNEL ?? "chrome" }, testMatch: /mobile/ },
   ],
-  webServer: {
+  webServer: EXTERNAL
+    ? undefined
+    : {
     // Fresh demo database each run. Cleanup happens here, not in globalSetup, because
     // Playwright starts the web server before global setup runs.
     command: `node -e "require('fs').rmSync('.data/e2e',{recursive:true,force:true})" && npx next start -p ${PORT}`,

@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-_Last updated: 21 October 2026 (session 5)._
+_Last updated: 21 October 2026 (session 6)._
 
 **Overall:** pilot-ready MVP in demo mode. All three journeys (driver, host, admin) work end to end against the real database logic and are covered by browser tests. **Not ready for real customers.** That needs live credentials, legal answers and a staging deploy; see "Blocked / external".
 
@@ -14,7 +14,8 @@ _Last updated: 21 October 2026 (session 5)._
 | 4 | Host request reminders, escalation of unconfirmed sessions + admin "needs attention" queue, finance CSV exports (admin + host), nonce-based CSP, GitHub Actions CI | `0af22ff` |
 | 5 | Own private repo `Gursimran2007/chargeshare` (subtree push), CI green on GitHub, actions on v7 | `9026b7c`, + v7 bump |
 | 6 | Accessibility gate (axe) + contrast fixes, outage handling (`global-error`, pg pool), 14-day availability calendar, email delivery pipeline with allow-list, review moderation, bucket migration, `admin:grant` script, 30-day repeat and zero-result metrics | `429e576` (CI green) |
-| 7 | Photo metadata (GPS) stripping, PDF-as-download, financial reconciliation engine + admin view, demo payout labelling, demo tour, competitor research (P2P incumbents exist) | _this commit_ |
+| 7 | Photo metadata (GPS) stripping, PDF-as-download, financial reconciliation engine + admin view, demo payout labelling, demo tour, competitor research (P2P incumbents exist) | `23cde64` (CI green) |
+| 8 | Staging tooling (env template, check/seed/build/start scripts, E2E against an external URL, docs/STAGING.md); fixed operational scripts that could never run (top-level await under CommonJS) | _this commit_. **Awaiting founder:** Supabase project + Razorpay test keys in `.env.staging.local` |
 
 ## Commands actually run (session 5, final run)
 
@@ -23,6 +24,15 @@ _Last updated: 21 October 2026 (session 5)._
 | `npm run check` (lint, typecheck, Vitest) | clean; **98 passed** (11 files) |
 | `npm run test:e2e` (production build, CSP enforced, local Chrome) | **16 passed**, incl. accessibility scans of 24 pages, GPS-tagged photo upload, reconciliation after a UI-driven refund |
 | GitHub Actions, previous push (`39646563190`) | **green** (both jobs) |
+
+## Session 6: staging tooling
+
+- **Bug found:** `npm run db:migrate` and `npm run admin:grant` crashed before doing anything. tsx compiled them as CommonJS, where top-level `await` is illegal. They are fixed (async `main()`), and `tests/scripts.test.ts` now executes every script in CI.
+- **New tooling:**
+  - `staging:check` validates DB connectivity/TLS, the Supabase admin API, email-confirmation setting and bucket, and Razorpay test keys (read-only call). It prints only masked values.
+  - `staging:seed` migrates and seeds via the Supabase Auth admin API, with a guarded `--reset`.
+  - `test:e2e:staging` runs the same browser suite against `http://localhost:3260`.
+- **Not yet run against real services:** waiting on the founder's accounts (docs/STAGING.md §1–3).
 
 ## Session 5 changes
 
@@ -103,7 +113,7 @@ None of these were attempted, because each requires an account, credentials or s
 git clone https://github.com/Gursimran2007/chargeshare.git && cd chargeshare
 # (or, inside the original monorepo: cd "Desktop/my codes/chargeshare")
 npm install
-npm run check          # lint + types + 98 tests (~20 s)
+npm run check          # lint + types + 102 tests (~25 s)
 npm run test:e2e       # build + 16 browser tests incl. accessibility (~1–2 min; needs Google Chrome)
 npm run dev            # demo at http://localhost:3000 (demo accounts on /login)
 ```

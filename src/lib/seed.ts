@@ -174,12 +174,18 @@ function fill(s: Seed): ListingInput {
   } as ListingInput;
 }
 
-/** Seeds clearly-labelled demo data by driving the real services, so every ledger and state is consistent. */
-export async function seedDemoData(db: Db, now = new Date()) {
+export type CreateUser = (u: { email: string; password: string; fullName: string }) => Promise<string>;
+
+/**
+ * Seeds clearly-labelled demo data by driving the real services, so every ledger and state is consistent.
+ * `createUser` defaults to the local auth adapter; staging passes one backed by the Supabase Auth admin API.
+ */
+export async function seedDemoData(db: Db, now = new Date(), opts: { createUser?: CreateUser } = {}) {
   const provider = createDemoProvider("demo-payment-secret", "demo-webhook-secret");
+  const createUser: CreateUser = opts.createUser ?? ((u) => registerUser(db, u));
   const ids = {} as Record<UserKey, string>;
   for (const [key, u] of Object.entries(USERS) as [UserKey, (typeof USERS)[UserKey]][]) {
-    ids[key] = await registerUser(db, { email: u.email, password: DEMO_PASSWORD, fullName: u.name });
+    ids[key] = await createUser({ email: u.email, password: DEMO_PASSWORD, fullName: u.name });
   }
   await db.query("insert into public.user_roles (user_id, role) values ($1, 'admin')", [ids.admin]);
   const actor = async (k: UserKey) => (await loadActor(db, ids[k])) as Actor;

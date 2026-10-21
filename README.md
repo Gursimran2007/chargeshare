@@ -12,6 +12,7 @@ This repository is a production-minded MVP. It runs fully offline in **demo mode
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Regulatory, tariff and payments research, labelled fact / claim / assumption |
 | [docs/PILOT_PLAN.md](docs/PILOT_PLAN.md) | 90-day Chennai pilot with expansion thresholds |
 | [docs/METRICS.md](docs/METRICS.md) | Metric definitions and what is tracked |
+| [docs/STAGING.md](docs/STAGING.md) | Step-by-step private staging on Supabase + Razorpay test mode |
 | `/how-it-works` (in the app) | Business model, live unit economics, real vs simulated |
 
 > **Demo data is fictional.** Every seeded host, listing, booking, review and payment is made up. Seeded verification checks are flagged `is_simulated` and are labelled "simulated" everywhere in the UI. No money moves in demo mode.
@@ -128,9 +129,10 @@ npm run build        # production build
 npm run start        # serve the production build (requires SESSION_SECRET)
 npm run lint
 npm run typecheck
-npm test             # 98 unit/integration tests against in-memory Postgres
+npm test             # 102 unit/integration tests against in-memory Postgres
 npm run test:e2e     # production build + 16 browser tests incl. accessibility (needs Google Chrome)
 npm run admin:grant -- you@example.com   # make an existing account admin (needs DATABASE_URL)
+npm run staging:check | staging:seed | staging:build | staging:start | test:e2e:staging   # see docs/STAGING.md
 npm run check        # lint + typecheck + test
 npm run db:migrate   # apply migrations to DATABASE_URL (Supabase)
 npm run demo:reset   # wipe the embedded demo database and uploads
@@ -155,6 +157,7 @@ npm run demo:reset   # wipe the embedded demo database and uploads
 | `tests/notifications.test.ts` | Email queued transactionally (nothing sent on rollback), allow-list, retries then failure, outbox capture, review moderation |
 | `tests/image-metadata.test.ts` | EXIF/GPS, XMP and IPTC stripped from JPEG, PNG and WebP; malformed images rejected |
 | `tests/reconciliation.test.ts` | 9 ledger/payment/refund/payout/booking-state invariants pass on service-generated data and catch tampering |
+| `tests/scripts.test.ts` | Every operational script (migrate, admin:grant, staging check/seed) actually starts and fails safely without credentials |
 | `e2e/a11y.spec.ts` | axe-core WCAG 2.1 A/AA scan of 22 public, driver, host and admin pages; fails on serious/critical violations |
 | `e2e/mobile.spec.ts` | Pixel 7 viewport: driver pages, host workspace and admin console with no horizontal overflow; map/list toggle |
 
