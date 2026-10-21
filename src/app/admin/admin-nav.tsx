@@ -10,6 +10,7 @@ const LINKS = [
   ["/admin/listings", "Listings"],
   ["/admin/bookings", "Bookings & disputes"],
   ["/admin/payouts", "Payouts"],
+  ["/admin/reconciliation", "Reconciliation"],
   ["/admin/users", "Users"],
   ["/admin/support", "Support & incidents"],
   ["/admin/reviews", "Reviews"],

@@ -72,6 +72,13 @@ export default async function HowItWorks() {
         <p className="mt-3 text-sm text-ink-500">Other revenue lines (installation partnerships, fleet accounts, host insurance) are possibilities to evaluate only once the core booking loop is proven.</p>
       </section>
 
+      <section className="mt-12">
+        <h2 className="text-xl font-semibold">Competition, honestly</h2>
+        <p className="mt-2 text-ink-600">
+          {brand.name} is not the first to let private chargers be shared. Public networks already operate in Chennai, and at least one Indian app publicly describes a peer-to-peer model where private charger owners list and earn. The bet here is not the idea itself but its execution: verified safety and permission, reserved slots instead of first-come access, accountable operations, and density in one neighbourhood at a time. Sources and caveats are in the repository&apos;s research notes.
+        </p>
+      </section>
+
       <section className="mt-12 grid gap-8 sm:grid-cols-2">
         <div>
           <h2 className="text-xl font-semibold">Where an advantage could come from</h2>
@@ -108,8 +115,13 @@ export default async function HowItWorks() {
       </section>
 
       {config.demoMode ? (
-        <section className="mt-12 rounded-xl border border-ink-200 bg-ink-50 p-6">
+        <section id="demo-tour" className="mt-12 scroll-mt-24 rounded-xl border border-ink-200 bg-ink-50 p-6">
           <h2 className="text-xl font-semibold">Explore the demo</h2>
+          <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-ink-700">
+            <li><strong>Driver:</strong> find a charger on the map, pick a day in the availability strip, reserve, pay (simulated), then view the receipt or cancel.</li>
+            <li><strong>Host:</strong> accept the pending request, check earnings and the ledger, or create a new listing and upload evidence.</li>
+            <li><strong>Admin:</strong> approve the listing waiting in the verification queue, resolve the disputed booking, review reconciliation and analytics.</li>
+          </ol>
           <p className="mt-1 text-sm text-ink-600">Sign in with any of these fictional accounts (password <code className="font-mono font-semibold">{DEMO_PASSWORD}</code>):</p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {DEMO_ACCOUNTS.map((a) => (

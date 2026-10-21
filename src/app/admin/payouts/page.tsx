@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { hostEarnings } from "@/lib/services/finance";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/domain/time";
+import { config } from "@/lib/config";
 
 export const metadata = { title: "Admin · Payouts" };
 
@@ -20,7 +21,8 @@ export default async function AdminPayouts() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold">Payouts</h1>
-        <p className="mt-1 text-sm text-ink-500">Payouts are executed manually (bank/UPI transfer) and then recorded here with the transfer reference. Automated split settlements require payment-provider approval.</p>
+        <p className="mt-1 text-sm text-ink-500">Payouts are executed manually (bank/UPI transfer) and then recorded here with the transfer reference. Only mark a payout paid after the bank confirms the transfer. Automated split settlements require payment-provider approval.</p>
+        {config.demoMode ? <p className="mt-2 text-sm font-medium text-warn-600">Demo mode: balances come from simulated payments; recording a payout here moves no money.</p> : null}
       </div>
       <div className="overflow-x-auto rounded-xl border border-ink-100 bg-white">
         <table className="w-full min-w-[760px] text-sm">

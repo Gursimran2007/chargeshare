@@ -1,6 +1,8 @@
 import { Badge, Card, Stat } from "@/components/ui";
 import { getDb } from "@/lib/db";
 import { platformMetrics } from "@/lib/services/finance";
+import { reconcile } from "@/lib/services/reconciliation";
+import Link from "next/link";
 import { formatINR } from "@/lib/money";
 import { config } from "@/lib/config";
 
@@ -9,7 +11,9 @@ export const metadata = { title: "Admin · Analytics" };
 const pct = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(1)}%`);
 
 export default async function AdminAnalytics() {
-  const m = await platformMetrics(await getDb());
+  const db = await getDb();
+  const m = await platformMetrics(db);
+  const failingChecks = (await reconcile(db)).filter((c) => !c.ok).length;
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-3">
@@ -18,6 +22,12 @@ export default async function AdminAnalytics() {
           <Badge tone="warn">Demo data: {m.demoShare.bookings} of {m.bookingRequests} bookings and {m.demoShare.listings} listings are seeded</Badge>
         ) : null}
       </div>
+      <Link
+        href="/admin/reconciliation"
+        className={`block rounded-xl border p-3 text-sm font-medium ${failingChecks ? "border-stop-600/30 bg-stop-100 text-stop-600" : "border-go-600/20 bg-go-100 text-go-600"}`}
+      >
+        {failingChecks ? `Reconciliation: ${failingChecks} check(s) failing. Review before paying out →` : "Reconciliation: all ledger, refund and payout checks pass →"}
+      </Link>
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">Supply & demand</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

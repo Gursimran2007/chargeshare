@@ -6,6 +6,7 @@ import { requireRolePage } from "@/lib/auth";
 import { hostEarnings } from "@/lib/services/finance";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/domain/time";
+import { config } from "@/lib/config";
 
 export const metadata = { title: "Earnings" };
 
@@ -39,6 +40,11 @@ export default async function EarningsPage() {
         }
       />
       <HostNav />
+      {config.demoMode ? (
+        <p className="mb-4 rounded-xl border border-warn-600/30 bg-warn-100/60 p-3 text-sm text-ink-700">
+          Demo data: these earnings come from simulated payments, and payouts marked &ldquo;paid&rdquo; are simulated records. No money has moved.
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Gross booking value" value={formatINR(e.grossBookingPaise)} hint="What drivers paid for your sessions" />
         <Stat label="Platform commission" value={formatINR(e.commissionPaise)} hint="Net of refund reversals" />
@@ -49,7 +55,7 @@ export default async function EarningsPage() {
         <Stat label="Paid out" value={formatINR(e.paidOutPaise)} hint={e.inFlightPayoutPaise ? `${formatINR(e.inFlightPayoutPaise)} in progress` : undefined} />
         <Stat label="Available for payout" value={formatINR(e.availablePaise)} tone="volt" />
       </div>
-      <p className="mt-3 text-xs text-ink-500">Payouts are reviewed and sent manually by ChargeShare while automated payouts are being set up. Tax treatment of your earnings depends on your circumstances; consult a tax professional.</p>
+      <p className="mt-3 text-xs text-ink-500">Payouts are reviewed and sent manually by ChargeShare (bank/UPI transfer) while automated payouts are being set up; &ldquo;paid&rdquo; means our team recorded the transfer reference shown. Tax treatment of your earnings depends on your circumstances; consult a tax professional.</p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
         <Card className="overflow-hidden">

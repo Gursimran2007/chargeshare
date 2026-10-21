@@ -52,9 +52,17 @@ Nothing here has been verified by a lawyer. Re-check every item before relying o
 | Hosts' home or commercial property policies may not cover visitors using EV equipment, or damage to a third party's vehicle. | **Question for insurer/broker** |
 | A platform liability policy plus a host-protection programme is likely needed before public launch. | Recommendation |
 
-## 6. Competition and positioning (not researched in depth)
+## 6. Competition and positioning
 
-Public charging networks and aggregator apps already exist in Chennai. I have not compiled a verified list. **Hypothesis:** ChargeShare's distinctive offer is *reserved, verified access to private and semi-private chargers* rather than another public-station map. The pilot should test this against simply listing public stations.
+| Item | Label |
+|---|---|
+| **Peer-to-peer charging already exists in India.** Bolt.Earth publishes a guide describing P2P charging, where owners of private chargers at homes, housing societies, shops or offices make them available to nearby EV owners, and its app lets owners list as hosts and earn when others charge. ([Bolt.Earth P2P guide](https://bolt.earth/blog/peer-to-peer-ev-charging-in-india-the-complete-guide), [app guide](https://bolt.earth/blog/how-to-use-bolt-earth-ev-charging-app-guide-to-setup-chargers-and-rewards)) | External claim (the company's own content). **Action:** try their host and driver flows hands-on before positioning. |
+| Statiq lets users list a new charger in its app and pays ₹100 in charging credit per validated listing. ([Statiq blog](https://statiq.in/blog/ev-charging-with-statiq-is-now-more-rewarding-with-the-list-a-new-charger-feature/)) | External claim |
+| Reported public charging in Chennai: 218 public stations as of April 2025 (Tamil Nadu: 1,524). Statiq's undated page lists 259 stations in Chennai. The Greater Chennai Corporation plans 15+ more under a PPP. ([Madras Musings](https://madrasmusings.com/vol-35-no-2/tamil-nadu-looks-to-increase-ev-charging-stations-chennai-to-get-100-new-ones/), [Statiq Chennai](https://www.statiq.in/chennai-ev-charging-station), [Powerline, Mar 2026](https://powerline.net.in/2026/03/17/gcc-to-set-up-ev-charging-stations-in-over-15-locations-in-chennai/)) | External claims, differently dated; treat as order-of-magnitude only |
+| ChargeShare is **not** first to private-charger sharing. Its possible edge is the combination of (a) document- and site-verified safety and permission, (b) **reserved** slots with buffers, rather than first-come access, (c) operational accountability (disputes, refunds, host response SLAs) and (d) neighbourhood density in one cluster. | Hypothesis. The pilot must show drivers value reservation and verification enough to choose it over free-to-list incumbents. |
+| Partnership routes worth testing: charger installers (refer customers who already have wallboxes), apartment developers and facility managers (visitor-bay revenue), and office parks (off-hours monetisation). | Recommendation. No contact has been made. |
+
+**Not researched (open):** host liability and insurance products available in India for EV charging on private premises; driver acquisition costs by channel. Both need primary research (brokers; small paid tests) once the founder approves spend.
 
 ## 7. Precise questions to take to professionals
 

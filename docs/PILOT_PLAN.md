@@ -16,6 +16,7 @@ Do these before the first real booking:
 - Have a lawyer review the Terms, Privacy and Cancellation policies. Arrange insurance cover, or at least written confirmation from hosts' insurers.
 - Deploy a staging environment (Supabase + Razorpay test mode) and run the E2E suite against it.
 - Write the incident runbook: who answers the phone, how a listing gets suspended, and how drivers get refunded.
+- Use the incumbents hands-on (Bolt.Earth's peer-to-peer host and driver flows; Statiq's listing feature), and write down exactly where ChargeShare's reserved, verified model must beat them. See [RESEARCH.md](RESEARCH.md) §6.
 
 ## Target cluster
 

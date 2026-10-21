@@ -34,6 +34,6 @@ test("host and admin pages have no serious accessibility violations", async ({ p
   const ctx = await browser.newContext();
   const admin = await ctx.newPage();
   await signIn(admin, "admin@chargeshare.demo", "/admin");
-  for (const p of ["/admin", "/admin/verifications", "/admin/bookings", "/admin/payouts", "/admin/users", "/admin/support"]) await audit(admin, p);
+  for (const p of ["/admin", "/admin/verifications", "/admin/bookings", "/admin/payouts", "/admin/reconciliation", "/admin/reviews", "/admin/users", "/admin/support"]) await audit(admin, p);
   await ctx.close();
 });

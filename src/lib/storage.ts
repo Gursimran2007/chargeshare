@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "@/lib/config";
 import { AppError } from "@/lib/errors";
+import { MalformedImageError, stripImageMetadata } from "@/lib/image-metadata";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const TYPES: Record<string, { ext: string; magic: (b: Buffer) => boolean }> = {
@@ -25,14 +26,22 @@ export async function saveUpload(file: File, prefix: string, opts: { imagesOnly?
   if (!t || (opts.imagesOnly && file.type === "application/pdf")) {
     throw new AppError("invalid", opts.imagesOnly ? "Upload a JPG, PNG or WebP image." : "Upload a JPG, PNG, WebP or PDF file.");
   }
-  const buf = Buffer.from(await file.arrayBuffer());
-  if (!t.magic(buf)) throw new AppError("invalid", "That file doesn't look like a valid image or PDF.");
+  const raw = Buffer.from(await file.arrayBuffer());
+  if (!t.magic(raw)) throw new AppError("invalid", "That file doesn't look like a valid image or PDF.");
+  let buf: Buffer;
+  try {
+    // Remove EXIF/GPS and other metadata so photos cannot reveal the exact address.
+    buf = stripImageMetadata(raw, file.type);
+  } catch (e) {
+    if (e instanceof MalformedImageError) throw new AppError("invalid", "That image file appears to be damaged. Try exporting it again.");
+    throw e;
+  }
   const key = `${prefix}/${crypto.randomUUID()}.${t.ext}`;
   if (config.supabase.url && config.supabase.serviceRoleKey) {
     const res = await fetch(`${config.supabase.url}/storage/v1/object/${config.supabase.storageBucket}/${key}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${config.supabase.serviceRoleKey}`, "Content-Type": file.type, "x-upsert": "false" },
-      body: buf,
+      body: new Uint8Array(buf),
     });
     if (!res.ok) throw new AppError("invalid", "Upload failed. Please try again.");
   } else {

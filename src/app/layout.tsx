@@ -30,7 +30,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         {config.demoMode ? (
           <div className="bg-warn-100 px-4 py-1.5 text-center text-xs font-medium text-warn-600">
-            Demo mode: listings, hosts and bookings are fictional and payments are simulated. No real chargers, no real money.
+            Demo mode: listings, hosts and bookings are fictional and payments are simulated. No real chargers, no real money.{" "}
+            <a href="/how-it-works#demo-tour" className="font-semibold underline">Take the demo tour</a>
           </div>
         ) : null}
         <SiteHeader viewer={viewer} />

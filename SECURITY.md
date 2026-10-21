@@ -18,6 +18,8 @@ This file records an adversarial self-review done during the build. It is not an
 | Can a misconfigured deploy confirm bookings without payment? | Simulated payments refused outside demo mode | `tests/ops.test.ts` |
 | Can admin privileges be escalated? | Roles only granted server-side; RLS revokes role writes; every admin action re-checks the role | `security.test.ts`, `e2e/access.spec.ts` |
 | Unsafe uploads? | 5 MB limit; JPG/PNG/WebP/PDF checked by magic bytes (no SVG); served with `Content-Security-Policy: default-src 'none'` and `nosniff`; evidence restricted to owner and admins | `e2e/access.spec.ts` |
+| Address leaked through photo metadata? | EXIF/GPS, XMP and IPTC stripped from every uploaded JPEG/PNG/WebP before storage; malformed images rejected; PDFs served as downloads, never rendered in the app origin | `tests/image-metadata.test.ts`, `e2e/host-admin.spec.ts` (uploads a GPS-tagged photo and inspects the stored bytes) |
+| Inconsistent financial records? | Nine reconciliation invariants (capture posted, split balances, refunds reversed, no over-refund, status vs refunds, payouts posted, no host overpaid, paid states have payment, captured = price), live at `/admin/reconciliation` | `tests/reconciliation.test.ts`, `e2e/host-admin.spec.ts` |
 | Premature address exposure? | Public view exposes only approximate location; exact address shown only to confirmed bookings, the host and admins | `security.test.ts` |
 | Brute force / spam? | Postgres rate limits on auth, booking, messaging, uploads, tickets and reports; cap of 3 open unpaid holds per driver | `ops.test.ts`, `bookings.test.ts` |
 | Open redirects? | `next` parameter restricted to same-site paths (rejects `//` and `/\`) | code review |

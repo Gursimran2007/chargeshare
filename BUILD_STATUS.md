@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-_Last updated: 21 October 2026 (session 4)._
+_Last updated: 21 October 2026 (session 5)._
 
 **Overall:** pilot-ready MVP in demo mode. All three journeys (driver, host, admin) work end to end against the real database logic and are covered by browser tests. **Not ready for real customers.** That needs live credentials, legal answers and a staging deploy; see "Blocked / external".
 
@@ -13,16 +13,26 @@ _Last updated: 21 October 2026 (session 4)._
 | 3 | Safety cascade on suspension, hold cap, open-redirect fix, host review replies, tariff-category capture, research, pilot plan, metrics spec, decision log, security review | `585595f` |
 | 4 | Host request reminders, escalation of unconfirmed sessions + admin "needs attention" queue, finance CSV exports (admin + host), nonce-based CSP, GitHub Actions CI | `0af22ff` |
 | 5 | Own private repo `Gursimran2007/chargeshare` (subtree push), CI green on GitHub, actions on v7 | `9026b7c`, + v7 bump |
-| 6 | Accessibility gate (axe) + contrast fixes, outage handling (`global-error`, pg pool), 14-day availability calendar, email delivery pipeline with allow-list, review moderation, bucket migration, `admin:grant` script, 30-day repeat and zero-result metrics | _this commit_ |
+| 6 | Accessibility gate (axe) + contrast fixes, outage handling (`global-error`, pg pool), 14-day availability calendar, email delivery pipeline with allow-list, review moderation, bucket migration, `admin:grant` script, 30-day repeat and zero-result metrics | `429e576` (CI green) |
+| 7 | Photo metadata (GPS) stripping, PDF-as-download, financial reconciliation engine + admin view, demo payout labelling, demo tour, competitor research (P2P incumbents exist) | _this commit_ |
 
-## Commands actually run (session 4, final run)
+## Commands actually run (session 5, final run)
 
 | Command | Result |
 |---|---|
-| `npm run check` (lint, typecheck, Vitest) | clean; **91 passed** (9 files) |
-| `npm run test:e2e` (production build, CSP enforced, local Chrome) | **16 passed**: 8 journeys + 3 accessibility scans (22 pages) + 3 access/security + 2 mobile |
-| Outage drill: production build with `DATABASE_URL` pointing at a closed port | `/api/health` → 503; page errors → `error.tsx`; signed-in layout failure → `global-error.tsx`; process stayed up |
-| GitHub Actions on `Gursimran2007/chargeshare` | green before this session's push; re-checked after push (see below) |
+| `npm run check` (lint, typecheck, Vitest) | clean; **98 passed** (11 files) |
+| `npm run test:e2e` (production build, CSP enforced, local Chrome) | **16 passed**, incl. accessibility scans of 24 pages, GPS-tagged photo upload, reconciliation after a UI-driven refund |
+| GitHub Actions, previous push (`39646563190`) | **green** (both jobs) |
+
+## Session 5 changes
+
+- **Privacy (found in review):** host photos kept their EXIF metadata, so a phone photo's GPS tag could reveal the exact address that listings deliberately hide until booking. Uploads now have EXIF/XMP/IPTC stripped (JPEG, PNG, WebP; tested by unit tests and an E2E upload). Evidence PDFs are served as downloads with `Cross-Origin-Resource-Policy: same-origin`.
+- **Financial reconciliation:**
+  - Nine invariants run live at `/admin/reconciliation`: ledger postings for captures, refunds and payouts; split balances; refund caps; payment status; host overpayment; paid states having a captured payment.
+  - The analytics page shows a status banner.
+  - All nine pass on seeded and UI-generated data, and tests show they catch tampering.
+- **Honesty:** simulated payouts are labelled on the host earnings and admin payout pages. The demo banner links to a 3-step tour.
+- **Research:** peer-to-peer private-charger sharing already exists in India (Bolt.Earth publicly describes it; Statiq lets users list chargers). RESEARCH.md §6, the pilot plan and the how-it-works page now state this, and frame ChargeShare's edge as verification + reservation + operations + density (a hypothesis).
 
 ## Session 4 changes
 
@@ -93,7 +103,7 @@ None of these were attempted, because each requires an account, credentials or s
 git clone https://github.com/Gursimran2007/chargeshare.git && cd chargeshare
 # (or, inside the original monorepo: cd "Desktop/my codes/chargeshare")
 npm install
-npm run check          # lint + types + 91 tests (~20 s)
+npm run check          # lint + types + 98 tests (~20 s)
 npm run test:e2e       # build + 16 browser tests incl. accessibility (~1–2 min; needs Google Chrome)
 npm run dev            # demo at http://localhost:3000 (demo accounts on /login)
 ```

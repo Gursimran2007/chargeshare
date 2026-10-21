@@ -42,6 +42,9 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/files/[...p
       "Content-Type": MIME_BY_EXT[ext] ?? "application/octet-stream",
       "Cache-Control": scope === "listings" ? "public, max-age=300" : "private, no-store",
       "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
+      // PDFs are downloaded rather than rendered in the app's origin.
+      "Content-Disposition": ext === "pdf" ? `attachment; filename="document.pdf"` : "inline",
+      "Cross-Origin-Resource-Policy": "same-origin",
       "X-Content-Type-Options": "nosniff",
     },
   });

@@ -78,3 +78,11 @@ ChargeShare lives in a private repo, `Gursimran2007/chargeshare`. Development ha
 
 ### D23. Outage behaviour
 Database errors in a page render `error.tsx` (with `retry()`, which re-fetches). Errors in the root layout (session lookup) render `global-error.tsx`. The `pg` pool logs idle-client errors instead of crashing the process, and `/api/health` returns 503. Anonymous visitors can still read static pages, because the session lookup skips the database when there is no session cookie.
+
+### D24. Strip image metadata in-house rather than re-encode
+Uploaded photos are public once a listing is live, and phone photos carry GPS. `src/lib/image-metadata.ts` removes EXIF/XMP/IPTC segments from JPEG, PNG and WebP without decoding pixels, so no native image library is needed. Malformed files are rejected.
+**Trade-off:** the EXIF orientation is lost too; a few photos may need re-uploading upright.
+
+### D25. Reconciliation as executable invariants
+`src/lib/services/reconciliation.ts` encodes nine accounting and state invariants as SQL. They run on the admin page and in tests, including after UI-driven refunds in E2E. Matching against provider settlement files is a later step.
+

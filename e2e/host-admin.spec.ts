@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { PASSWORD, signIn } from "./helpers";
 
 const EVIDENCE = path.join(__dirname, "fixtures", "evidence.png");
+const GPS_PHOTO = path.join(__dirname, "fixtures", "gps-tagged.jpg");
 
 test("new host lists a charger, an admin verifies it, and it goes live", async ({ page, browser }) => {
   const email = `e2e.host.${Date.now()}@example.com`;
@@ -48,6 +49,15 @@ test("new host lists a charger, an admin verifies it, and it goes live", async (
   await page.getByRole("button", { name: "Save draft listing" }).click();
   await page.waitForURL(/\/host\/listings\/[0-9a-f-]{36}$/);
   await expect(page.getByText("Draft", { exact: true }).first()).toBeVisible();
+
+  // A phone photo with GPS in its EXIF: the stored copy must not leak the location.
+  await page.getByLabel("Choose photos").setInputFiles(GPS_PHOTO);
+  await page.getByRole("button", { name: "Upload", exact: true }).click();
+  await expect(page.getByText("1 photo uploaded.")).toBeVisible();
+  const src = await page.locator('img[src^="/api/files/listings/"]').first().getAttribute("src");
+  const stored = Buffer.from(await (await page.request.get(src!)).body());
+  expect(stored.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
+  expect(stored.includes(Buffer.from("GPSLatitude"))).toBe(false);
 
   // The draft cannot be submitted until every check has evidence
   const evidenceForms = page.locator("form").filter({ has: page.locator('input[name="evidence"]') });
@@ -108,4 +118,7 @@ test("admin resolves the seeded dispute with a partial refund", async ({ page })
   await expect(page.getByText("No open disputes.")).toBeVisible();
   await page.goto("/admin/audit");
   await expect(page.getByText("dispute.resolve").first()).toBeVisible();
+  // The partial refund must leave the books consistent.
+  await page.goto("/admin/reconciliation");
+  await expect(page.getByText("All 9 checks pass.")).toBeVisible();
 });
