@@ -8,7 +8,7 @@ const root = path.resolve(__dirname, "..");
 function run(script: string, env: Record<string, string> = {}) {
   const r = spawnSync("npx", ["tsx", script], {
     cwd: root,
-    env: { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "", ...env },
+    env: { NODE_ENV: "test", PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "", ...env },
     encoding: "utf8",
     timeout: 60_000,
   });
