@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-_Last updated: 21 October 2026 (session 6)._
+_Last updated: 21 October 2026 (session 7)._
 
 **Overall:** pilot-ready MVP in demo mode. All three journeys (driver, host, admin) work end to end against the real database logic and are covered by browser tests. **Not ready for real customers.** That needs live credentials, legal answers and a staging deploy; see "Blocked / external".
 
@@ -15,7 +15,8 @@ _Last updated: 21 October 2026 (session 6)._
 | 5 | Own private repo `Gursimran2007/chargeshare` (subtree push), CI green on GitHub, actions on v7 | `9026b7c`, + v7 bump |
 | 6 | Accessibility gate (axe) + contrast fixes, outage handling (`global-error`, pg pool), 14-day availability calendar, email delivery pipeline with allow-list, review moderation, bucket migration, `admin:grant` script, 30-day repeat and zero-result metrics | `429e576` (CI green) |
 | 7 | Photo metadata (GPS) stripping, PDF-as-download, financial reconciliation engine + admin view, demo payout labelling, demo tour, competitor research (P2P incumbents exist) | `23cde64` (CI green) |
-| 8 | Staging tooling (env template, check/seed/build/start scripts, E2E against an external URL, docs/STAGING.md); fixed operational scripts that could never run (top-level await under CommonJS) | _this commit_. **Awaiting founder:** Supabase project + Razorpay test keys in `.env.staging.local` |
+| 8 | Staging tooling (env template, check/seed/build/start scripts, E2E against an external URL, docs/STAGING.md); fixed operational scripts that could never run (top-level await under CommonJS) | `848f80f` + `7c3a246` (CI green) |
+| 9 | Staging proven on a real PostgreSQL 17 server: migrations, seed, production build, 16/16 E2E twice with a reset between. Fixed two staging-tooling bugs found by running it | _this commit_ |
 
 ## Commands actually run (session 5, final run)
 
@@ -24,6 +25,20 @@ _Last updated: 21 October 2026 (session 6)._
 | `npm run check` (lint, typecheck, Vitest) | clean; **98 passed** (11 files) |
 | `npm run test:e2e` (production build, CSP enforced, local Chrome) | **16 passed**, incl. accessibility scans of 24 pages, GPS-tagged photo upload, reconciliation after a UI-driven refund |
 | GitHub Actions, previous push (`39646563190`) | **green** (both jobs) |
+
+## Session 7: real-Postgres staging (no accounts needed)
+
+The founder asked for Supabase + Razorpay staging but did not want to create the accounts. Creating accounts and handling their credentials is something the assistant may not do, so that path remains documented (docs/STAGING.md §1–5) and unrun. Instead, staging ran on a **local PostgreSQL 17 server** (Homebrew, data in git-ignored `.data/pg-staging`, stopped afterwards). This was the first time the networked node-postgres adapter ran at all; every earlier test used embedded PGlite.
+
+- **Passed:**
+  - Migrations, including the auth shim and `btree_gist`.
+  - The seed.
+  - All 9 reconciliation checks.
+  - A production build.
+  - **16/16 E2E tests on two consecutive runs** with `staging:seed -- --reset` between them, with zero server errors.
+- **Bug: `staging:build` crashed.** Next.js forwards Node flags to its build workers via `NODE_OPTIONS`, where `--env-file` is forbidden. It's replaced by `scripts/with-env.mjs` (tested).
+- **Bug: `--reset` wiped `platform_settings`.** `TRUNCATE … CASCADE` follows `updated_by → profiles`. Settings are now snapshotted and restored after both wipes; a changed commission survives a reset (verified).
+- **Still unverified:** Supabase Auth, Supabase Storage, Razorpay test checkout and webhooks. All need the founder's accounts.
 
 ## Session 6: staging tooling
 
@@ -113,7 +128,7 @@ None of these were attempted, because each requires an account, credentials or s
 git clone https://github.com/Gursimran2007/chargeshare.git && cd chargeshare
 # (or, inside the original monorepo: cd "Desktop/my codes/chargeshare")
 npm install
-npm run check          # lint + types + 102 tests (~25 s)
+npm run check          # lint + types + 104 tests (~25 s)
 npm run test:e2e       # build + 16 browser tests incl. accessibility (~1–2 min; needs Google Chrome)
 npm run dev            # demo at http://localhost:3000 (demo accounts on /login)
 ```

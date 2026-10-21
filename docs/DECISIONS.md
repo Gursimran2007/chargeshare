@@ -89,3 +89,6 @@ Uploaded photos are public once a listing is live, and phone photos carry GPS. `
 ### D26. Staging is a local production build on real Supabase + Razorpay test mode
 It is free and private, needs no cloud account beyond Supabase and Razorpay, and exercises Supabase Auth, RLS, Storage and the migrations for real. Demo users are created through the Supabase Auth admin API. The scripts refuse live Razorpay keys and non-localhost URLs, and `--reset` refuses to touch non-test accounts. Not covered: Razorpay webhooks, which need a public URL, i.e. a cloud deploy or tunnel (a founder decision).
 
+### D27. Env files are loaded by a wrapper, not `node --env-file`
+Next.js passes Node flags to its build workers through `NODE_OPTIONS`, which rejects `--env-file`. `scripts/with-env.mjs` loads the file with `process.loadEnvFile` and then runs the command. `STAGING_ENV_FILE` selects the file, so the same scripts serve Supabase staging and local-Postgres staging.
+

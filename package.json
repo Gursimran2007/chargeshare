@@ -15,10 +15,10 @@
     "demo:reset": "tsx scripts/reset-demo.ts",
     "test:e2e": "next build && playwright test",
     "admin:grant": "tsx scripts/grant-admin.ts",
-    "staging:check": "tsx --env-file=.env.staging.local scripts/staging-check.ts",
-    "staging:seed": "tsx --env-file=.env.staging.local scripts/staging-seed.ts",
-    "staging:build": "node --env-file=.env.staging.local node_modules/next/dist/bin/next build",
-    "staging:start": "node --env-file=.env.staging.local node_modules/next/dist/bin/next start -p 3260",
+    "staging:check": "node scripts/with-env.mjs ${STAGING_ENV_FILE:-.env.staging.local} tsx scripts/staging-check.ts",
+    "staging:seed": "node scripts/with-env.mjs ${STAGING_ENV_FILE:-.env.staging.local} tsx scripts/staging-seed.ts",
+    "staging:build": "node scripts/with-env.mjs ${STAGING_ENV_FILE:-.env.staging.local} next build",
+    "staging:start": "node scripts/with-env.mjs ${STAGING_ENV_FILE:-.env.staging.local} next start -p 3260",
     "test:e2e:staging": "E2E_BASE_URL=http://localhost:3260 playwright test"
   },
   "dependencies": {

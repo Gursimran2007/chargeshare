@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -26,5 +27,20 @@ describe("operational scripts start correctly", () => {
     expect(r.out).not.toMatch(/TransformError|ERR_REQUIRE_ASYNC_MODULE|SyntaxError/);
     expect(r.out).toMatch(expected);
     expect(r.code).toBe(1);
+  });
+});
+
+describe("env-file wrapper", () => {
+  it("explains a missing env file instead of crashing", () => {
+    const r = spawnSync("node", ["scripts/with-env.mjs", ".env.does-not-exist", "true"], { cwd: root, encoding: "utf8" });
+    expect(r.stderr).toMatch(/\.env\.does-not-exist not found/);
+    expect(r.status).toBe(1);
+  });
+  it("passes the file's variables to the command", () => {
+    const f = path.join(root, ".data", "with-env-test.env");
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, "CS_WITH_ENV_TEST=hello\n");
+    const r = spawnSync("node", ["scripts/with-env.mjs", f, "node", "-e", "console.log(process.env.CS_WITH_ENV_TEST)"], { cwd: root, encoding: "utf8" });
+    expect(r.stdout.trim()).toBe("hello");
   });
 });

@@ -52,7 +52,7 @@ Use it once for `SESSION_SECRET` and again for `CRON_SECRET`.
 ## 4. Run it
 
 ```bash
-npm run staging:check      # validates everything, prints only masked values
+npm run staging:check      # validates everything, prints only masked values (STAGING_ENV_FILE overrides the file)
 npm run staging:seed       # migrations + fictional demo data (demo users created via Supabase Auth)
 npm run staging:build
 npm run staging:start      # serves http://localhost:3260 (keep running)
@@ -86,3 +86,53 @@ The E2E suite uses simulated payments so it is repeatable. To see a real Razorpa
 - `NEXT_PUBLIC_APP_URL` must be localhost.
 - `--reset` only removes `@chargeshare.demo` and `e2e.host.*@example.com` accounts, and aborts if anyone else exists.
 - Nothing prints secret values.
+
+## Without any accounts: staging on a local PostgreSQL server
+
+This exercises the networked database path the Supabase deployment uses (node-postgres adapter, migrations script, real Postgres server), with the app's own local auth instead of Supabase Auth. It was run on 21 October 2026: **16/16 browser tests passed twice, with a `--reset` in between, and zero server errors.**
+
+1. Install PostgreSQL:
+   ```bash
+   brew install postgresql@17
+   ```
+2. Create a throwaway cluster inside the project and start it on port 5433:
+   ```bash
+   /opt/homebrew/opt/postgresql@17/bin/initdb -D .data/pg-staging -U postgres --auth=trust -E UTF8 --locale=en_US.UTF-8
+   ```
+   ```bash
+   LC_ALL=en_US.UTF-8 /opt/homebrew/opt/postgresql@17/bin/pg_ctl -D .data/pg-staging -o "-p 5433 -c listen_addresses=localhost" -l .data/pg-staging.log start
+   ```
+   ```bash
+   /opt/homebrew/opt/postgresql@17/bin/psql -h localhost -p 5433 -U postgres -c "create database chargeshare_staging"
+   ```
+   `LC_ALL` is required on macOS, otherwise the server refuses to start.
+3. Create `.env.pgstaging.local` (git-ignored) with these settings, plus `SESSION_SECRET` and `CRON_SECRET` generated with `openssl rand -base64 32`:
+   - `NEXT_PUBLIC_APP_URL=http://localhost:3260`
+   - `DATABASE_URL=postgres://postgres@localhost:5433/chargeshare_staging`
+   - `AUTH_PROVIDER=local`
+   - `UPLOAD_DIR=.data/pg-staging-uploads`
+   - `DEMO_MODE=true`
+   - `PAYMENT_PROVIDER=demo`
+   - `ALLOW_DEMO_PAYMENTS=true`
+4. Seed, build, start and test:
+   ```bash
+   STAGING_ENV_FILE=.env.pgstaging.local npm run staging:seed
+   ```
+   ```bash
+   STAGING_ENV_FILE=.env.pgstaging.local npm run staging:build
+   ```
+   ```bash
+   STAGING_ENV_FILE=.env.pgstaging.local npm run staging:start
+   ```
+   ```bash
+   npm run test:e2e:staging
+   ```
+5. Stop the cluster when you're done:
+   ```bash
+   LC_ALL=en_US.UTF-8 /opt/homebrew/opt/postgresql@17/bin/pg_ctl -D .data/pg-staging stop
+   ```
+   To remove PostgreSQL entirely:
+   ```bash
+   brew uninstall postgresql@17
+   ```
+

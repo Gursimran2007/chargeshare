@@ -129,7 +129,7 @@ npm run build        # production build
 npm run start        # serve the production build (requires SESSION_SECRET)
 npm run lint
 npm run typecheck
-npm test             # 102 unit/integration tests against in-memory Postgres
+npm test             # 104 unit/integration tests against in-memory Postgres
 npm run test:e2e     # production build + 16 browser tests incl. accessibility (needs Google Chrome)
 npm run admin:grant -- you@example.com   # make an existing account admin (needs DATABASE_URL)
 npm run staging:check | staging:seed | staging:build | staging:start | test:e2e:staging   # see docs/STAGING.md
