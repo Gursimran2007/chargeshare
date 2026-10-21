@@ -23,7 +23,7 @@ export default async function AuditLog() {
                 <td className="px-4 py-2.5">{r.actor ?? "system"}</td>
                 <td className="px-4 py-2.5 font-mono text-xs">{r.action}</td>
                 <td className="px-4 py-2.5 font-mono text-xs">{r.target_type}:{r.target_id.slice(0, 8)}</td>
-                <td className="max-w-md px-4 py-2.5 text-xs text-ink-600">{r.reason}{r.after_state ? <code className="mt-1 block truncate text-ink-400">{JSON.stringify(r.after_state)}</code> : null}</td>
+                <td className="max-w-md px-4 py-2.5 text-xs text-ink-600">{r.reason}{r.after_state ? <code className="mt-1 block truncate text-ink-500">{JSON.stringify(r.after_state)}</code> : null}</td>
               </tr>
             ))}
           </tbody>

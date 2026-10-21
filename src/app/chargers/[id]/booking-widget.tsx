@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import { AlertTriangle, BatteryCharging, CheckCircle2, Info, Loader2 } from "lucide-react";
-import { bookAction, quoteAction, slotsAction } from "./actions";
+import { bookAction, calendarAction, quoteAction, slotsAction } from "./actions";
 import { Card, Select, Input, Badge, cn, LinkButton } from "@/components/ui";
 import { FormMessage, SubmitButton } from "@/components/form-bits";
 import { formatINR } from "@/lib/money";
@@ -54,6 +54,15 @@ export function BookingWidget({
   const [loadingSlots, startSlots] = useTransition();
   const [quoting, startQuote] = useTransition();
   const [state, action] = useActionState(bookAction, null);
+  const [calendar, setCalendar] = useState<Awaited<ReturnType<typeof calendarAction>> | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    calendarAction(listingId, duration).then((c) => live && setCalendar(c));
+    return () => {
+      live = false;
+    };
+  }, [listingId, duration]);
 
   useEffect(() => {
     startSlots(async () => {
@@ -97,6 +106,42 @@ export function BookingWidget({
         <input type="hidden" name="listingId" value={listingId} />
         <input type="hidden" name="startTime" value={time} />
         <FormMessage state={state} />
+        {/* min-w-0: fieldsets default to min-content width, which would let the strip widen the page */}
+        <fieldset className="min-w-0">
+          <legend className="mb-1 text-xs font-medium text-ink-600">Next 14 days</legend>
+          {calendar ? (
+            <div className="-mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 pb-1">
+              {calendar.map((d) => {
+                const day = new Date(`${d.date}T12:00:00Z`);
+                const selected = d.date === date;
+                return (
+                  <button
+                    key={d.date}
+                    type="button"
+                    onClick={() => setDate(d.date)}
+                    aria-pressed={selected}
+                    className={cn(
+                      "flex w-12 shrink-0 snap-start flex-col items-center rounded-lg border py-1.5 text-xs",
+                      selected ? "border-ink-900 bg-ink-900 text-white" : "border-ink-200 bg-white text-ink-800 hover:border-ink-400",
+                      !d.open && !selected && "bg-ink-50 text-ink-500",
+                    )}
+                  >
+                    {/* Accessible name = visible "Wed 22" + screen-reader-only month and availability. */}
+                    <span className="font-medium">{new Intl.DateTimeFormat("en-IN", { weekday: "short", timeZone: "UTC" }).format(day)} </span>
+                    <span className="text-sm font-semibold tabular-nums">{day.getUTCDate()}</span>
+                    <span className="sr-only">
+                      {" "}{new Intl.DateTimeFormat("en-IN", { month: "long", timeZone: "UTC" }).format(day)}, {d.closed ? "closed" : d.open ? `${d.open} start times` : "fully booked"}
+                    </span>
+                    <span aria-hidden className={cn("mt-0.5 size-1.5 rounded-full", d.open ? (selected ? "bg-volt-300" : "bg-go-500") : "bg-transparent")} />
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="skeleton h-14 rounded-lg" />
+          )}
+          <p className="mt-1 text-[11px] text-ink-500">Green dot: open slots for the selected duration.</p>
+        </fieldset>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label htmlFor="bw-date" className="mb-1 block text-xs font-medium text-ink-600">Date</label>

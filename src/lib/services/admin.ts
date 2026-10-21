@@ -158,3 +158,30 @@ export async function handleReport(
     await notify(q, rows[0].reporter_id, { type: "report", title: `Your report is ${status}`, body: note.slice(0, 200), link: "/support" });
   });
 }
+
+/** Hide or restore a review. Hidden reviews disappear from listings and ratings; the author still sees theirs. */
+export async function setReviewHidden(db: Db, actor: Actor | null, reviewId: string, hidden: boolean, reason: string) {
+  requireRole(actor, "admin");
+  if (hidden && reason.trim().length < 5) throw new AppError("invalid", "Record why the review is being hidden.");
+  return db.tx(async (q) => {
+    const { rows } = await q.query<{ is_hidden: boolean; author_id: string }>(
+      "select is_hidden, author_id from public.reviews where id = $1 for update",
+      [reviewId],
+    );
+    if (!rows[0]) throw new AppError("not_found", "Review not found.");
+    await q.query("update public.reviews set is_hidden = $2 where id = $1", [reviewId, hidden]);
+    await audit(q, actor.userId, hidden ? "review.hide" : "review.restore", "review", reviewId, {
+      before: { is_hidden: rows[0].is_hidden },
+      after: { is_hidden: hidden },
+      reason,
+    });
+    if (hidden) {
+      await notify(q, rows[0].author_id, {
+        type: "review",
+        title: "One of your reviews was hidden",
+        body: `It no longer appears publicly. Reason: ${reason.trim()}`,
+        link: "/support",
+      });
+    }
+  });
+}

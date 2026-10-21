@@ -40,7 +40,7 @@ export function SiteFooter({ demo }: { demo: boolean }) {
         </div>
       </Container>
       <div className="border-t border-white/10">
-        <Container className="flex flex-col gap-2 py-5 text-xs text-ink-500 sm:flex-row sm:justify-between">
+        <Container className="flex flex-col gap-2 py-5 text-xs text-ink-400 sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} {brand.legalEntity}. Pre-launch product.</span>
           {demo ? <span>Running in demo mode with fictional data and simulated payments.</span> : null}
         </Container>

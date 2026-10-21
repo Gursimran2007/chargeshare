@@ -131,6 +131,8 @@ export interface PlatformMetrics {
   funnel: { searchVisitors: number; listingVisitors: number; bookingVisitors: number; searchToListing: number | null; listingToBooking: number | null };
   hostResponseMedianMinutes: number | null;
   hostCancellationRate: number | null;
+  repeatRate30d: number | null;
+  zeroResultSearchRate: number | null;
   bookingCompletionRate: number | null;
   demoShare: { bookings: number; listings: number };
 }
@@ -202,6 +204,17 @@ export async function platformMetrics(q: Queryable): Promise<PlatformMetrics> {
     `select count(*) filter (where b.status = 'cancelled' and b.cancelled_by = 'host')::int as host, count(*)::int as confirmed
        from public.bookings b where exists (select 1 from public.booking_events e where e.booking_id = b.id and e.to_status = 'confirmed')`,
   );
+  const { rows: r30 } = await q.query<{ one: number; many: number }>(
+    `select count(*) filter (where n >= 1)::int as one, count(*) filter (where n >= 2)::int as many
+       from (select b.driver_id, count(*) as n from public.bookings b
+              where b.created_at > now() - interval '30 days'
+                and exists (select 1 from public.payments p where p.booking_id = b.id and p.captured_at is not null)
+              group by b.driver_id) t`,
+  );
+  const { rows: zr } = await q.query<{ zero: number; total: number }>(
+    `select count(*) filter (where (props ->> 'results')::int = 0)::int as zero, count(*)::int as total
+       from public.analytics_events where event = 'search' and created_at > now() - interval '30 days'`,
+  );
   const demoBookings = await one("select count(*)::int as n from public.bookings where is_demo");
   const demoListings = await one("select count(*)::int as n from public.charger_listings where is_demo");
   return {
@@ -238,6 +251,8 @@ export async function platformMetrics(q: Queryable): Promise<PlatformMetrics> {
     },
     hostResponseMedianMinutes: resp[0].m === null ? null : Math.round(resp[0].m),
     hostCancellationRate: ratio(hc[0].host, hc[0].confirmed),
+    repeatRate30d: ratio(r30[0].many, r30[0].one),
+    zeroResultSearchRate: ratio(zr[0].zero, zr[0].total),
     bookingCompletionRate: ratio(comp[0].done, comp[0].due),
   };
 }

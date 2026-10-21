@@ -4,6 +4,7 @@ import { Container, EmptyState, LinkButton, PageHeader, Card } from "@/component
 import { BookingStatusPill, DemoBadge, ListingPhoto } from "@/components/domain";
 import { getDb } from "@/lib/db";
 import { maybeSweep } from "@/lib/services/maintenance";
+import { emailDelivery } from "@/lib/email/delivery";
 import { requireViewer } from "@/lib/auth";
 import { formatINR } from "@/lib/money";
 import { formatDateTime, formatTime } from "@/lib/domain/time";
@@ -44,7 +45,7 @@ function BookingRow({ b }: { b: Row }) {
 export default async function DashboardPage() {
   const viewer = await requireViewer("/dashboard");
   const db = await getDb();
-  await maybeSweep(db);
+  await maybeSweep(db, emailDelivery());
   const { rows } = await db.query<Row>(
     `select b.id, b.code, b.status, b.start_at, b.end_at, b.amount_paise, b.is_demo, b.listing_id,
             l.title, l.locality, l.property_type, l.rated_power_kw

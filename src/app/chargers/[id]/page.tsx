@@ -121,9 +121,12 @@ export default async function ChargerPage({ params }: PageProps<"/chargers/[id]"
                 { icon: ShieldCheck, k: "Make & model", v: `${l.charger_make} ${l.charger_model}` },
                 { icon: Timer, k: "Bookings", v: `${l.min_duration_minutes / 60}–${l.max_duration_minutes / 60} h, ${l.buffer_minutes} min buffer` },
               ].map((x) => (
-                <div key={x.k} className="flex gap-3 rounded-xl border border-ink-100 bg-white p-4">
-                  <x.icon className="mt-0.5 size-5 shrink-0 text-volt-600" aria-hidden />
-                  <div><dt className="text-xs text-ink-500">{x.k}</dt><dd className="font-medium">{x.v}</dd></div>
+                <div key={x.k} className="relative rounded-xl border border-ink-100 bg-white p-4 pl-12">
+                  <dt className="text-xs text-ink-500">
+                    <x.icon className="absolute left-4 top-4.5 size-5 text-volt-600" aria-hidden />
+                    {x.k}
+                  </dt>
+                  <dd className="font-medium">{x.v}</dd>
                 </div>
               ))}
             </dl>
@@ -175,7 +178,7 @@ export default async function ChargerPage({ params }: PageProps<"/chargers/[id]"
                   </div>
                   <div className="shrink-0 text-right">
                     <VerificationPill status={c.status} simulated={c.is_simulated} />
-                    {c.reviewed_at ? <div className="mt-1 text-xs text-ink-400">{formatDate(c.reviewed_at)}</div> : null}
+                    {c.reviewed_at ? <div className="mt-1 text-xs text-ink-500">{formatDate(c.reviewed_at)}</div> : null}
                   </div>
                 </li>
               ))}

@@ -40,7 +40,8 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
               <Link
                 href="/notifications"
                 className="relative grid size-9 place-items-center rounded-xl text-ink-700 hover:bg-ink-50"
-                aria-label={`Notifications${viewer.unread ? ` (${viewer.unread} unread)` : ""}`}
+                // The accessible name includes the visible count ("9+") so voice users can say what they see.
+                aria-label={viewer.unread ? `Notifications, ${viewer.unread > 9 ? "9+" : viewer.unread} unread` : "Notifications"}
               >
                 <Bell className="size-5" aria-hidden />
                 {viewer.unread ? (

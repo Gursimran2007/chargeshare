@@ -5,6 +5,7 @@ import { BookingStatusPill } from "@/components/domain";
 import { refundAction, resolveDisputeAction } from "../actions";
 import { getDb } from "@/lib/db";
 import { maybeSweep } from "@/lib/services/maintenance";
+import { emailDelivery } from "@/lib/email/delivery";
 import { formatINR } from "@/lib/money";
 import { formatDateTime } from "@/lib/domain/time";
 import type { BookingStatus } from "@/lib/domain/booking-state";
@@ -13,7 +14,7 @@ export const metadata = { title: "Admin · Bookings" };
 
 export default async function AdminBookings() {
   const db = await getDb();
-  await maybeSweep(db);
+  await maybeSweep(db, emailDelivery());
   const { rows } = await db.query<{
     id: string; code: string; status: BookingStatus; start_at: Date; amount_paise: number; title: string; driver: string; host: string;
     pay_status: string | null; provider: string | null; refunded: number; is_demo: boolean; dispute_note: string | null;

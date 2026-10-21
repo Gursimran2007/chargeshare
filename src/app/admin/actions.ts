@@ -11,7 +11,7 @@ import { approveListing, moderateListing, reviewVerification, type Decision } fr
 import { resolveDispute } from "@/lib/services/bookings";
 import { adminRefund } from "@/lib/services/payments";
 import { createPayout, updatePayoutStatus } from "@/lib/services/finance";
-import { handleReport, respondToTicket, restrictUser, setCommission } from "@/lib/services/admin";
+import { handleReport, respondToTicket, restrictUser, setCommission, setReviewHidden } from "@/lib/services/admin";
 
 // Every action re-checks the admin role server-side inside the service call.
 async function admin() {
@@ -132,6 +132,17 @@ export async function reportAction(_: ActionState, form: FormData): Promise<Acti
   try {
     await handleReport(await getDb(), await admin(), String(form.get("reportId")), String(form.get("status")) as "actioned", String(form.get("note") ?? ""));
     return done("Report updated.", "/admin/support");
+  } catch (e) {
+    return failure(e);
+  }
+}
+
+export async function reviewVisibilityAction(_: ActionState, form: FormData): Promise<ActionState> {
+  try {
+    const hide = form.get("hide") === "1";
+    await setReviewHidden(await getDb(), await admin(), String(form.get("reviewId")), hide, String(form.get("reason") ?? ""));
+    revalidatePath("/chargers", "layout");
+    return done(hide ? "Review hidden." : "Review restored.", "/admin/reviews");
   } catch (e) {
     return failure(e);
   }

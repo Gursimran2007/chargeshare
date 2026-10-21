@@ -12,6 +12,7 @@ const LINKS = [
   ["/admin/payouts", "Payouts"],
   ["/admin/users", "Users"],
   ["/admin/support", "Support & incidents"],
+  ["/admin/reviews", "Reviews"],
   ["/admin/settings", "Settings"],
   ["/admin/audit", "Audit log"],
 ] as const;

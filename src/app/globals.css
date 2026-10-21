@@ -16,21 +16,21 @@
   --color-ink-100: #ebeff5;
   --color-ink-50: #f5f7fa;
 
-  --color-volt-700: #077a76;
-  --color-volt-600: #0a9a94;
+  --color-volt-700: #066b67;
+  --color-volt-600: #077d78;
   --color-volt-500: #0fb5ae;
   --color-volt-400: #2fd3c9;
   --color-volt-300: #7ce8e0;
   --color-volt-100: #d8f7f4;
   --color-volt-50: #eefbfa;
 
-  --color-go-600: #16a34a;
+  --color-go-600: #15803d;
   --color-go-500: #22c55e;
   --color-go-100: #dcfce7;
 
-  --color-warn-600: #c2710c;
+  --color-warn-600: #a35200;
   --color-warn-100: #fff1d6;
-  --color-stop-600: #d4343f;
+  --color-stop-600: #b91c1c;
   --color-stop-100: #fde3e5;
 
   --shadow-card: 0 1px 2px rgb(10 23 48 / 0.04), 0 4px 16px -4px rgb(10 23 48 / 0.08);

@@ -5,6 +5,7 @@ import { BookingStatusPill } from "@/components/domain";
 import { HostNav } from "../host-nav";
 import { getDb } from "@/lib/db";
 import { maybeSweep } from "@/lib/services/maintenance";
+import { emailDelivery } from "@/lib/email/delivery";
 import { requireRolePage } from "@/lib/auth";
 import { formatINR } from "@/lib/money";
 import { formatDateTime, formatTime, localDateString, zonedParts } from "@/lib/domain/time";
@@ -18,7 +19,7 @@ export default async function HostBookingsPage({ searchParams }: PageProps<"/hos
   const viewer = await requireRolePage("host", "/host/bookings");
   const sp = await searchParams;
   const db = await getDb();
-  await maybeSweep(db);
+  await maybeSweep(db, emailDelivery());
   const weekOffset = Number(sp.week ?? 0) || 0;
   const { rows } = await db.query<{ id: string; code: string; status: BookingStatus; start_at: Date; end_at: Date; amount_paise: number; host_share_paise: number; title: string; driver: string; listing_id: string }>(
     `select b.id, b.code, b.status, b.start_at, b.end_at, b.amount_paise, b.host_share_paise, l.title, split_part(p.full_name, ' ', 1) as driver, b.listing_id
@@ -66,7 +67,7 @@ export default async function HostBookingsPage({ searchParams }: PageProps<"/hos
                     <li key={b.id}>
                       <Link href={`/bookings/${b.id}`} className={cn("block rounded-lg px-2 py-1.5 text-[11px] leading-tight", b.status === "requested" ? "bg-warn-100 text-warn-600" : b.status === "completed" ? "bg-go-100 text-go-600" : b.status === "disputed" ? "bg-stop-100 text-stop-600" : "bg-ink-900 text-white")}>
                         <div className="font-semibold">{formatTime(b.start_at)}–{formatTime(b.end_at)}</div>
-                        <div className="truncate opacity-80">{b.driver} · {b.code}</div>
+                        <div className="truncate">{b.driver} · {b.code}</div>
                       </Link>
                     </li>
                   ))}

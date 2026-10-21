@@ -258,12 +258,12 @@ export function ListingWizard({ connectors, initial, listingId }: { connectors: 
                       rules.map((r, i) => (
                         <div key={i} className="flex items-center gap-2 text-sm">
                           <Input aria-label={`${DAYS[wd]} from`} type="time" step={1800} value={r.start} className="h-9 w-28" onChange={(e) => set("availability", d.availability.map((a) => (a === r ? { ...a, start: e.target.value } : a)))} />
-                          <span className="text-ink-400">to</span>
+                          <span className="text-ink-500">to</span>
                           <Input aria-label={`${DAYS[wd]} until`} type="time" step={1800} value={r.end === "24:00" ? "23:59" : r.end} className="h-9 w-28" onChange={(e) => set("availability", d.availability.map((a) => (a === r ? { ...a, end: e.target.value === "23:59" ? "24:00" : e.target.value } : a)))} />
                         </div>
                       ))
                     ) : (
-                      <span className="text-sm text-ink-400">Unavailable</span>
+                      <span className="text-sm text-ink-500">Unavailable</span>
                     )}
                   </li>
                 );

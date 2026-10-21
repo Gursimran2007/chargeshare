@@ -28,7 +28,7 @@ export default async function NotificationsPage() {
                 <div>
                   <div className="text-sm font-semibold">{n.title}</div>
                   {n.body ? <div className="text-sm text-ink-600">{n.body}</div> : null}
-                  <div className="mt-1 text-xs text-ink-400">{formatDateTime(n.created_at)}</div>
+                  <div className="mt-1 text-xs text-ink-500">{formatDateTime(n.created_at)}</div>
                 </div>
               </div>
             );

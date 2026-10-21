@@ -61,7 +61,7 @@ export async function audit(
   );
 }
 
-/** In-app notification, plus an email copy (delivered to the demo outbox until an email provider is configured). */
+/** In-app notification, plus an optional email copy queued for delivery after the transaction commits. */
 export async function notify(
   q: Queryable,
   userId: string,
@@ -73,7 +73,8 @@ export async function notify(
   );
   if (n.email) {
     await q.query(
-      `insert into public.notifications (user_id, type, title, body, link, channel, read_at) values ($1, $2, $3, $4, $5, 'email', now())`,
+      `insert into public.notifications (user_id, type, title, body, link, channel, read_at, delivery_status)
+       values ($1, $2, $3, $4, $5, 'email', now(), 'pending')`,
       [userId, n.type, n.title, n.body ?? "", n.link ?? null],
     );
   }

@@ -88,13 +88,13 @@ docs/                     decisions, research, pilot plan, metrics
 ## What is implemented
 
 ### Driver
-Sign up / sign in / password reset · printable receipts · vehicle profiles with an indicative catalogue of Indian EVs · map + list discovery with locality search, "near me", filters (connector, power, price, access type, instant book, availability on a date/time, compatible with my vehicle) · listing pages with approximate location, specs, hours, five-check verification panel, cancellation policy, reviews · live slot picker, server-computed quote, compatibility and charge estimate · instant book or request-to-book · checkout with a slot-hold countdown · confirmation with exact address, access instructions and directions · upcoming/past bookings · policy-based cancellation with automatic refund · check-in · privacy-masked messaging · disputes within 72 hours · reviews after completion · support tickets and safety reports · notifications.
+Sign up / sign in / password reset · 14-day availability calendar · printable receipts · vehicle profiles with an indicative catalogue of Indian EVs · map + list discovery with locality search, "near me", filters (connector, power, price, access type, instant book, availability on a date/time, compatible with my vehicle) · listing pages with approximate location, specs, hours, five-check verification panel, cancellation policy, reviews · live slot picker, server-computed quote, compatibility and charge estimate · instant book or request-to-book · checkout with a slot-hold countdown · confirmation with exact address, access instructions and directions · upcoming/past bookings · policy-based cancellation with automatic refund · check-in · privacy-masked messaging · disputes within 72 hours · reviews after completion · support tickets and safety reports · notifications.
 
 ### Host
 Downloadable earnings statement (CSV) · host profile · identity verification with document upload · self-declared safety checklist · six-step listing wizard (charger, location, access, pricing and rules, weekly availability) · photo uploads (public listing photos vs reviewer-only installation photos) · per-listing evidence for property permission, charger spec, installation and electrical safety · submit for review, pause/resume · blocked dates · request accept/decline · weekly calendar · session start/complete · earnings from the ledger (gross, commission, refunds, net, pending, held, paid out, available) · payout history.
 
 ### Admin (server-enforced; non-admins get 404)
-Analytics (drivers, hosts, listings submitted/approved/active, booking requests, completed sessions, conversion, repeat rate, cancellation and refund rates, GBV, commission, estimated net contribution, payout liability, utilisation only when there are ≥10 recent sessions; seeded data is flagged) · verification queue with per-check decisions and reasons · listing approval, rejection, change requests, suspension · bookings and payments oversight, partial/full refunds, dispute resolution · payouts · user restriction · support tickets and incident reports with severity triage · commission configuration · finance CSV exports (ledger, bookings, refunds, payouts; audited) · "needs attention" queue for sessions that ended without host confirmation · append-only audit log.
+Analytics (drivers, hosts, listings submitted/approved/active, booking requests, completed sessions, conversion, repeat rate, cancellation and refund rates, GBV, commission, estimated net contribution, payout liability, utilisation only when there are ≥10 recent sessions; seeded data is flagged) · verification queue with per-check decisions and reasons · listing approval, rejection, change requests, suspension · bookings and payments oversight, partial/full refunds, dispute resolution · payouts · user restriction · support tickets and incident reports with severity triage · review moderation (hide/restore, audited) · commission configuration · finance CSV exports (ledger, bookings, refunds, payouts; audited) · "needs attention" queue for sessions that ended without host confirmation · append-only audit log.
 
 ### Booking engine
 States: `requested → pending_payment → confirmed → checked_in → in_progress → completed`, plus `declined`, `expired`, `cancelled`, `disputed`, `refunded`. Every transition is validated and written to `booking_events`.
@@ -128,8 +128,9 @@ npm run build        # production build
 npm run start        # serve the production build (requires SESSION_SECRET)
 npm run lint
 npm run typecheck
-npm test             # 85 unit/integration tests against in-memory Postgres
-npm run test:e2e     # production build + 13 browser journeys (needs Google Chrome installed)
+npm test             # 91 unit/integration tests against in-memory Postgres
+npm run test:e2e     # production build + 16 browser tests incl. accessibility (needs Google Chrome)
+npm run admin:grant -- you@example.com   # make an existing account admin (needs DATABASE_URL)
 npm run check        # lint + typecheck + test
 npm run db:migrate   # apply migrations to DATABASE_URL (Supabase)
 npm run demo:reset   # wipe the embedded demo database and uploads
@@ -151,6 +152,8 @@ npm run demo:reset   # wipe the embedded demo database and uploads
 | `tests/exports.test.ts` | CSV escaping and formula-injection guard, ledger export reconciles to the paisa, date ranges, admin-only exports, host statement limited to own lines |
 | `tests/csp.test.ts` | CSP: nonce + strict-dynamic, no unsafe scripts in production, framing blocked, tile and Razorpay origins |
 | `e2e/access.spec.ts` | Signed-out redirects, driver blocked from admin (404), CSP nonce applied and rotated, admin CSV download, host statement download, evidence not public, forged webhook rejected, health check |
+| `tests/notifications.test.ts` | Email queued transactionally (nothing sent on rollback), allow-list, retries then failure, outbox capture, review moderation |
+| `e2e/a11y.spec.ts` | axe-core WCAG 2.1 A/AA scan of 22 public, driver, host and admin pages; fails on serious/critical violations |
 | `e2e/mobile.spec.ts` | Pixel 7 viewport: driver pages, host workspace and admin console with no horizontal overflow; map/list toggle |
 
 See [BUILD_STATUS.md](BUILD_STATUS.md) for the latest recorded results.
@@ -171,6 +174,9 @@ See [`.env.example`](.env.example). Summary:
 | `AUTH_PROVIDER` | optional | `supabase` (default with a database) or `local` |
 | `PAYMENT_PROVIDER` | payments | `demo` or `razorpay` (razorpay is refused in demo mode; demo is refused outside demo mode) |
 | `ALLOW_DEMO_PAYMENTS` | private staging only | Lets simulated payments run against a real database |
+| `RESEND_API_KEY`, `EMAIL_FROM` | real email | Otherwise emails are captured in the outbox |
+| `EMAIL_ALLOWLIST` | dev/staging | Only these addresses/@domains get real email |
+| `EMAIL_ALLOW_ALL_RECIPIENTS` | production | `true` to email all users (ignored outside production) |
 | `CRON_SECRET` | production | Bearer token for `POST /api/cron/sweep`: expire holds, remind hosts, escalate unconfirmed sessions (every ~5 min) |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | live payments | Key id is sent to the browser checkout; the secrets never are |
 | `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_ATTRIBUTION` | production maps | Public OSM tiles are for development only |
@@ -181,10 +187,9 @@ See [`.env.example`](.env.example). Summary:
 
 1. Create a Supabase project (region: Mumbai, `ap-south-1`).
 2. Apply migrations: `DATABASE_URL="postgresql://postgres:…@db.<ref>.supabase.co:5432/postgres" npm run db:migrate` (or `supabase db push`). Do **not** run `supabase/local/`.
-3. Create a private Storage bucket named `chargeshare`.
+3. The private Storage bucket `chargeshare` is created by migration `0007` (5 MB limit, images/PDF only).
 4. Auth → URL configuration: site URL = your domain; add `https://<domain>/auth/callback` as a redirect URL. Configure SMTP for production emails.
-5. Create your first admin: sign up normally, then in the SQL editor run
-   `insert into public.user_roles (user_id, role) select id, 'admin' from auth.users where email = 'you@example.com';`
+5. Create your first admin: sign up normally, then run `DATABASE_URL=... npm run admin:grant -- you@example.com` (recorded in the audit log).
 6. Deploy to a Node host (Vercel, Render, Railway, a VM). Set the env vars above, plus `SESSION_SECRET` and `CRON_SECRET`. Use Supabase's pooled connection string for serverless platforms. Schedule `POST /api/cron/sweep` with `Authorization: Bearer $CRON_SECRET` every 5 minutes. `GET /api/health` is a readiness probe.
    - Plain Postgres instead of Supabase: set `AUTH_PROVIDER=local`; `npm run db:migrate` then also applies the local auth shim.
 7. The demo seed is not run against Supabase. Real listings come from real hosts through the onboarding flow.
@@ -215,7 +220,7 @@ Simulated or not yet connected:
 - **Payments** are simulated in demo mode. Razorpay adapter is written but untested with real credentials.
 - **Supabase Auth adapter** (sign-in, sign-up, reset via `/auth/callback`) is written to `@supabase/ssr`'s documented API but untested without a project. Demo uses the local adapter.
 - **Supabase Storage** upload path is untested without a project; demo stores files in `.data/uploads`.
-- **Transactional email/SMS** are not sent; they land in `/dev/outbox` in demo mode.
+- **Transactional email** is queued and delivered by a worker through a Resend adapter with a recipient allow-list; without credentials it is captured in the outbox (`/dev/outbox` in demo mode). The Resend adapter is untested without an API key. No SMS.
 - **Geocoding** uses a built-in list of ~30 Chennai localities; hosts enter coordinates or use device location. Add a geocoder (Google, Mapbox, Ola Maps) before expanding.
 - **Map tiles** default to public OpenStreetMap tiles, which are not for production traffic.
 - **No charger telemetry**: no live status, metering or remote control (by design for the MVP; never claimed in the UI).

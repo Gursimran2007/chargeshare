@@ -69,3 +69,12 @@ Admin exports (ledger, bookings, refunds, payouts; IST date range) are audited. 
 
 ### D20. Own repository, published by git subtree; CI at its root
 ChargeShare lives in a private repo, `Gursimran2007/chargeshare`. Development happens in a subdirectory of a personal monorepo, and the app folder is published with `git subtree push`, which keeps the project's commit history. `.github/workflows/ci.yml` runs `npm ci`, a production dependency audit, `npm run check` and `npm run build`, then the Playwright suite against the runner's preinstalled Chrome.
+
+### D21. Email is queued in the transaction and delivered after commit
+`notify()` writes an email row (`delivery_status = 'pending'`) in the same transaction as the business change, so a rolled-back action never sends mail. The maintenance worker claims rows with `FOR UPDATE SKIP LOCKED`, sends through the configured transport (Resend, or the outbox when unconfigured), retries 3 times, and records the outcome. Real sends are limited to `EMAIL_ALLOWLIST` unless `EMAIL_ALLOW_ALL_RECIPIENTS=true` in production.
+
+### D22. Accessibility as a test gate
+`e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA) on 22 pages and fails on serious or critical issues. The first run found real defects: status colours below 4.5:1, invalid `<dl>` nesting, and accessible names that didn't match visible text. The colour tokens were darkened to pass.
+
+### D23. Outage behaviour
+Database errors in a page render `error.tsx` (with `retry()`, which re-fetches). Errors in the root layout (session lookup) render `global-error.tsx`. The `pg` pool logs idle-client errors instead of crashing the process, and `/api/health` returns 503. Anonymous visitors can still read static pages, because the session lookup skips the database when there is no session cookie.

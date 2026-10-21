@@ -1,4 +1,5 @@
 import { adminIds, notify, type Db } from "./common";
+import { recipientAllowed, type EmailTransport } from "@/lib/email/types";
 
 /**
  * Expires unpaid holds and unanswered requests across all listings, releasing
@@ -111,22 +112,86 @@ export interface MaintenanceResult {
   expired: number;
   reminded: number;
   escalated: number;
+  emails: Awaited<ReturnType<typeof deliverPendingEmails>> | null;
 }
 
 /** All scheduled follow-ups. Each step is idempotent and safe to run often. */
-export async function runMaintenance(db: Db, now = new Date()): Promise<MaintenanceResult> {
+export async function runMaintenance(db: Db, now = new Date(), email?: EmailDelivery): Promise<MaintenanceResult> {
   const expired = await sweepExpiredBookings(db, now);
   const reminded = await remindHostsOfRequests(db, now);
   const escalated = await escalateUnconfirmedSessions(db, now);
-  return { expired, reminded, escalated };
+  const emails = email ? await deliverPendingEmails(db, email) : null;
+  return { expired, reminded, escalated, emails };
 }
 
 const g = globalThis as unknown as { __csLastSweep?: number };
 
 /** Throttled maintenance (at most once a minute per process) for pages that list bookings. */
-export async function maybeSweep(db: Db) {
+export async function maybeSweep(db: Db, email?: EmailDelivery) {
   const t = Date.now();
   if (g.__csLastSweep && t - g.__csLastSweep < 60_000) return;
   g.__csLastSweep = t;
-  await runMaintenance(db).catch((e) => console.error("[maintenance]", e));
+  await runMaintenance(db, new Date(), email).catch((e) => console.error("[maintenance]", e));
+}
+
+export interface EmailDelivery {
+  transport: EmailTransport;
+  allowlist: string[];
+  allowAll: boolean;
+  appUrl: string;
+}
+
+/**
+ * Delivers queued email notifications. Runs outside business transactions; each
+ * row is claimed with SKIP LOCKED so concurrent workers never double-send.
+ * Retries up to 3 times, then marks the email failed.
+ */
+export async function deliverPendingEmails(db: Db, d: EmailDelivery, limit = 25) {
+  const result = { sent: 0, outbox: 0, blocked: 0, failed: 0 };
+  for (let i = 0; i < limit; i++) {
+    const done = await db.tx(async (q) => {
+      const { rows } = await q.query<{ id: string; email: string; title: string; body: string; link: string | null; delivery_attempts: number }>(
+        `select n.id, u.email, n.title, n.body, n.link, n.delivery_attempts
+           from public.notifications n join auth.users u on u.id = n.user_id
+          where n.channel = 'email' and n.delivery_status = 'pending'
+          order by n.created_at limit 1 for update of n skip locked`,
+      );
+      const m = rows[0];
+      if (!m) return false;
+      const mark = (status: string, error: string | null = null) =>
+        q.query(
+          `update public.notifications set delivery_status = $2, delivery_error = $3, delivery_attempts = delivery_attempts + 1,
+             delivered_at = case when $2 in ('sent', 'outbox') then now() end where id = $1`,
+          [m.id, status, error],
+        );
+      if (d.transport.name === "outbox") {
+        await mark("outbox");
+        result.outbox++;
+        return true;
+      }
+      if (!recipientAllowed(m.email, d.allowlist, d.allowAll)) {
+        await mark("blocked", "Recipient not in EMAIL_ALLOWLIST");
+        result.blocked++;
+        return true;
+      }
+      const link = m.link ? (m.link.startsWith("http") ? m.link : `${d.appUrl}${m.link}`) : null;
+      try {
+        await d.transport.send({ to: m.email, subject: m.title, text: [m.body, link].filter(Boolean).join("\n\n") });
+        await mark("sent");
+        result.sent++;
+      } catch (e) {
+        const msg = (e instanceof Error ? e.message : String(e)).slice(0, 300);
+        if (m.delivery_attempts + 1 >= 3) {
+          await mark("failed", msg);
+          result.failed++;
+        } else {
+          await q.query("update public.notifications set delivery_attempts = delivery_attempts + 1, delivery_error = $2 where id = $1", [m.id, msg]);
+          return false; // leave it pending for the next run
+        }
+      }
+      return true;
+    });
+    if (!done) break;
+  }
+  return result;
 }

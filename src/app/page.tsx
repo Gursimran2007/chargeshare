@@ -132,7 +132,7 @@ export default async function Home() {
               <label htmlFor="hero-q" className="sr-only">Area or locality</label>
               <div className="flex flex-1 items-center gap-2 px-3">
                 <Search className="size-5 text-ink-400" aria-hidden />
-                <input id="hero-q" name="q" placeholder="Try Adyar, OMR or T. Nagar" className="h-11 w-full bg-transparent text-ink-900 placeholder:text-ink-400 focus:outline-none" />
+                <input id="hero-q" name="q" placeholder="Try Adyar, OMR or T. Nagar" className="h-11 w-full bg-transparent text-ink-900 placeholder:text-ink-500 focus:outline-none" />
               </div>
               <button type="submit" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-volt-500 px-5 font-semibold text-ink-950 hover:bg-volt-400">
                 Find a charger <ArrowRight className="size-4" aria-hidden />
@@ -165,7 +165,7 @@ export default async function Home() {
               <li key={s.t} className="relative rounded-xl border border-ink-100 bg-white p-6 shadow-card">
                 <div className="flex items-center gap-3">
                   <span className="grid size-11 place-items-center rounded-xl bg-ink-900 text-volt-300"><s.icon className="size-5" aria-hidden /></span>
-                  <span className="font-display text-sm font-semibold text-ink-400">0{i + 1}</span>
+                  <span className="font-display text-sm font-semibold text-ink-500">0{i + 1}</span>
                 </div>
                 <h3 className="mt-5 text-lg font-semibold">{s.t}</h3>
                 <p className="mt-1.5 text-sm text-ink-500">{s.b}</p>

@@ -10,7 +10,15 @@ test("driver: search → compatible slot → demo payment → confirmation → r
   await expect(page.getByRole("heading", { name: "Besant Nagar boutique stay charger" })).toBeVisible();
   await expect(page.getByText("Fictional listing · checks simulated")).toBeVisible();
 
-  await page.getByLabel("Date").fill(istDate(5));
+  // Pick the day from the 14-day availability strip (5 days ahead).
+  const target = istDate(5);
+  const d = new Date(`${target}T12:00:00Z`);
+  const fmt = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-IN", { ...o, timeZone: "UTC" }).format(d);
+  const day = page.getByRole("button", { name: new RegExp(`^${fmt({ weekday: "short" })}\\s*${d.getUTCDate()}\\s+${fmt({ month: "long" })}, \\d+ start times$`) });
+  await expect(day).toBeVisible();
+  await day.click();
+  await expect(day).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("Date")).toHaveValue(target);
   await page.getByRole("button", { name: "10:00", exact: true }).click();
   await expect(page.getByText("Compatible with your vehicle")).toBeVisible();
   await expect(page.getByText("Estimates only.")).toBeVisible();

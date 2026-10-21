@@ -6,6 +6,7 @@ import { BookingStatusPill, DemoBadge } from "@/components/domain";
 import { CancelButton, CheckInButton, DisputeButton, HostRespond, HostSession, MessageForm, ReviewForm } from "./booking-panels";
 import { getDb } from "@/lib/db";
 import { maybeSweep } from "@/lib/services/maintenance";
+import { emailDelivery } from "@/lib/email/delivery";
 import { requireViewer } from "@/lib/auth";
 import { formatINR } from "@/lib/money";
 import { formatDateTime, formatTime } from "@/lib/domain/time";
@@ -23,7 +24,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const viewer = await requireViewer(`/bookings/${id}`);
   const db = await getDb();
-  await maybeSweep(db);
+  await maybeSweep(db, emailDelivery());
   const { rows } = await db.query<{
     id: string; code: string; status: BookingStatus; driver_id: string; host_id: string; listing_id: string;
     start_at: Date; end_at: Date; duration_minutes: number; price_per_hour_paise: number; booking_fee_paise: number;

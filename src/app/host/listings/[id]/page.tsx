@@ -121,7 +121,7 @@ export default async function ManageListingPage({ params }: PageProps<"/host/lis
                     </div>
                     <VerificationPill status={c.status} simulated={c.is_simulated} />
                   </div>
-                  <div className="mt-2 text-xs text-ink-400">
+                  <div className="mt-2 text-xs text-ink-500">
                     {c.submitted_at ? `Submitted ${formatDate(c.submitted_at)}` : "Not submitted"}
                     {c.reviewed_at ? ` · Decided ${formatDate(c.reviewed_at)}` : ""}
                     {c.evidence_paths.length ? ` · ${c.evidence_paths.length} file(s)` : ""}
@@ -171,7 +171,7 @@ export default async function ManageListingPage({ params }: PageProps<"/host/lis
             <ul className="mt-3 space-y-4">
               {reviews.map((r) => (
                 <li key={r.id} className="text-sm">
-                  <div className="flex justify-between"><span className="font-medium">{r.author || "Driver"} · {r.rating}/5</span><span className="text-xs text-ink-400">{formatDate(r.created_at)}</span></div>
+                  <div className="flex justify-between"><span className="font-medium">{r.author || "Driver"} · {r.rating}/5</span><span className="text-xs text-ink-500">{formatDate(r.created_at)}</span></div>
                   {r.comment ? <p className="mt-1 text-ink-600">{r.comment}</p> : null}
                   {r.host_reply ? (
                     <p className="mt-2 rounded-lg bg-ink-50 p-2 text-xs"><strong>Your reply:</strong> {r.host_reply}</p>

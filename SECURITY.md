@@ -25,6 +25,8 @@ This file records an adversarial self-review done during the build. It is not an
 | Secret exposure? | Secrets are server-only env vars; `.env*` ignored except `.env.example`; error messages to users are generic, with details logged server-side | code review |
 | XSS / script injection? | React escaping; no `dangerouslySetInnerHTML`; nonce-based CSP with `'strict-dynamic'` (no inline or eval scripts in production), `frame-ancestors 'none'`, `object-src 'none'`, `form-action 'self'` | `tests/csp.test.ts`, `e2e/access.spec.ts` (nonce applied, rotates per request); E2E journeys fail on any CSP violation |
 | Spreadsheet formula injection in finance exports? | Text cells beginning with `= + - @` are prefixed with `'`; numbers stay numeric; exports are admin-only (hosts get their own RLS-scoped statement) and every export is audited | `tests/exports.test.ts`, `e2e/access.spec.ts` |
+| Emails sent to real customers by accident? | Real sends require `RESEND_API_KEY`; recipients limited to `EMAIL_ALLOWLIST` unless `EMAIL_ALLOW_ALL_RECIPIENTS=true` **and** `NODE_ENV=production`; mail is queued in-transaction, so rollbacks never send | `tests/notifications.test.ts` |
+| Abusive or personal-data reviews? | Admin hide/restore with reason, author notified, audited | `tests/notifications.test.ts` |
 | CSRF on server actions? | Next.js server actions check the request Origin; session cookie is `SameSite=Lax`, `HttpOnly` and `Secure` in production | framework |
 
 ## Known gaps (fix before launch)

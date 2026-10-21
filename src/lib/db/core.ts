@@ -107,7 +107,9 @@ export async function createPool(connectionString: string): Promise<Db> {
   const pg = await import("pg");
   pg.default.types.setTypeParser(20, (v) => Number(v));
   pg.default.types.setTypeParser(1700, (v) => Number(v));
-  const pool = new pg.default.Pool({ connectionString, max: 10 });
+  const pool = new pg.default.Pool({ connectionString, max: 10, connectionTimeoutMillis: 5_000 });
+  // An idle client losing its connection emits 'error'; unhandled, that would crash the process.
+  pool.on("error", (e) => console.error("[db] idle client error", e.message));
   return wrapPool(pool);
 }
 

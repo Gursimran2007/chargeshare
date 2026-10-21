@@ -8,6 +8,7 @@ import { bookingRequestSchema, fieldErrors } from "@/lib/validation";
 import { availabilityContext } from "@/lib/services/listings";
 import { createBooking, quoteBooking } from "@/lib/services/bookings";
 import { availableStartTimes } from "@/lib/domain/availability";
+import { localDateString } from "@/lib/domain/time";
 import { AppError } from "@/lib/errors";
 import { config } from "@/lib/config";
 import { visitorId } from "@/lib/request";
@@ -21,6 +22,25 @@ export async function slotsAction(listingId: string, date: string, durationMinut
   if (!rows[0]) return [];
   const ctx = await availabilityContext(db, listingId);
   return availableStartTimes(date, durationMinutes, ctx.policy, ctx.rules, ctx.blocked, ctx.busy, new Date());
+}
+
+/** Open start times per day for the next `days` days (IST), for the day-strip calendar. */
+export async function calendarAction(listingId: string, durationMinutes: number, days = 14): Promise<{ date: string; open: number; closed: boolean }[]> {
+  if (!Number.isInteger(durationMinutes) || durationMinutes < 30 || days < 1 || days > 31) return [];
+  const db = await getDb();
+  const { rows } = await db.query("select 1 from public.charger_listings where id = $1 and status = 'active'", [listingId]);
+  if (!rows[0]) return [];
+  const ctx = await availabilityContext(db, listingId);
+  const now = new Date();
+  const out: { date: string; open: number; closed: boolean }[] = [];
+  for (let i = 0; i < days; i++) {
+    const date = localDateString(new Date(now.getTime() + i * 86400_000), ctx.policy.timeZone);
+    const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
+    const closed = !ctx.rules.some((r) => r.weekday === weekday);
+    const open = closed ? 0 : availableStartTimes(date, durationMinutes, ctx.policy, ctx.rules, ctx.blocked, ctx.busy, now).length;
+    out.push({ date, open, closed });
+  }
+  return out;
 }
 
 export async function quoteAction(input: unknown) {

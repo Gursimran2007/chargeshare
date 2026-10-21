@@ -6,6 +6,7 @@ import { ListingPhoto, ListingStatusPill, Rating } from "@/components/domain";
 import { HostNav } from "./host-nav";
 import { getDb } from "@/lib/db";
 import { maybeSweep } from "@/lib/services/maintenance";
+import { emailDelivery } from "@/lib/email/delivery";
 import { requireRolePage } from "@/lib/auth";
 import { hostEarnings } from "@/lib/services/finance";
 import { formatINR } from "@/lib/money";
@@ -17,7 +18,7 @@ export const metadata = { title: "Host dashboard" };
 export default async function HostDashboard() {
   const viewer = await requireRolePage("host", "/host");
   const db = await getDb();
-  await maybeSweep(db);
+  await maybeSweep(db, emailDelivery());
   const { rows: hp } = await db.query<{ display_name: string }>("select display_name from public.host_profiles where user_id = $1", [viewer.userId]);
   if (!hp[0]) redirect("/host/onboarding");
   const [{ rows: listings }, { rows: requests }, { rows: upcoming }, earnings] = await Promise.all([

@@ -43,6 +43,8 @@ export default async function AdminAnalytics() {
           <Stat label="Searched" value={m.funnel.searchVisitors} />
           <Stat label="Viewed a listing" value={m.funnel.listingVisitors} hint={`Search → listing: ${pct(m.funnel.searchToListing)}`} />
           <Stat label="Requested a booking" value={m.funnel.bookingVisitors} hint={`Listing → booking: ${pct(m.funnel.listingToBooking)}`} />
+          <Stat label="Searches with no results" value={pct(m.zeroResultSearchRate)} hint="Unmet demand: where to recruit hosts" />
+          <Stat label="Repeat rate, last 30 days" value={pct(m.repeatRate30d)} hint="Drivers with 2+ paid bookings ÷ drivers with 1+, created in the window" />
           <Stat label="Chargebacks" value="Not tracked" hint="Needs Razorpay dispute webhooks (payment.dispute.*)" />
         </div>
         <p className="mt-2 text-xs text-ink-500">Seeded bookings were created directly, so they are not in the funnel. CAC and host acquisition cost need real marketing spend data and are not shown.</p>

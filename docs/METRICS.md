@@ -22,7 +22,8 @@ Source of truth: Postgres. The append-only `ledger_entries` table backs money me
 | Listing → booking conversion | Distinct visitor ids with `booking_request` ÷ distinct visitor ids with `listing_view`, over the last 30 days | ✅ |
 | Booking conversion | Bookings with a captured payment ÷ all bookings created | ✅ |
 | Booking completion rate | `completed` or `refunded` ÷ bookings that reached `confirmed`, whose slot has ended, excluding cancellations | ✅ |
-| Repeat booking rate | Drivers with 2+ paid bookings ÷ drivers with 1+ | ✅ (all-time; add a 30-day cohort version for the pilot) |
+| Repeat booking rate | Drivers with 2+ paid bookings ÷ drivers with 1+ (all-time, and over bookings created in the last 30 days) | ✅ |
+| Zero-result search rate | Searches returning no chargers ÷ all searches, last 30 days. Signals unmet demand, i.e. where to recruit hosts | ✅ |
 | Cancellation rate | `cancelled` ÷ all bookings | ✅ |
 | Host-caused cancellation rate | Bookings cancelled by the host ÷ bookings that reached `confirmed` | ✅ (no-access disputes are counted separately, via `disputed`) |
 | Host response time | Median minutes from booking creation to the host's first accept/decline event | ✅ |
@@ -41,4 +42,4 @@ Source of truth: Postgres. The append-only `ledger_entries` table backs money me
 
 ## Not yet measured
 
-Search-to-results quality (zero-result searches), time-to-first-booking per new driver, host churn, support tickets per booking, and verification turnaround time. The data for all of these already exists in the tables.
+Time-to-first-booking per new driver, host churn, support tickets per booking, and verification turnaround time. The data for all of these already exists in the tables.

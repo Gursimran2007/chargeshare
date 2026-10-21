@@ -79,7 +79,7 @@ export function Label({ className, ...props }: ComponentProps<"label">) {
 }
 
 const inputBase =
-  "w-full rounded-xl border border-ink-200 bg-white px-3.5 text-sm text-ink-900 placeholder:text-ink-400 transition focus:border-volt-500 focus:outline-none focus:ring-4 focus:ring-volt-100 disabled:bg-ink-50 aria-[invalid=true]:border-stop-600";
+  "w-full rounded-xl border border-ink-200 bg-white px-3.5 text-sm text-ink-900 placeholder:text-ink-500 transition focus:border-volt-500 focus:outline-none focus:ring-4 focus:ring-volt-100 disabled:bg-ink-50 aria-[invalid=true]:border-stop-600";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cn(inputBase, "h-11", className)} {...props} />;
