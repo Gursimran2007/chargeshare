@@ -1,0 +1,54 @@
+import { Badge, Card, Stat } from "@/components/ui";
+import { getDb } from "@/lib/db";
+import { platformMetrics } from "@/lib/services/finance";
+import { formatINR } from "@/lib/money";
+import { config } from "@/lib/config";
+
+export const metadata = { title: "Admin · Analytics" };
+
+const pct = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(1)}%`);
+
+export default async function AdminAnalytics() {
+  const m = await platformMetrics(await getDb());
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold">Platform analytics</h1>
+        {config.demoMode || m.demoShare.bookings ? (
+          <Badge tone="warn">Demo data: {m.demoShare.bookings} of {m.bookingRequests} bookings and {m.demoShare.listings} listings are seeded</Badge>
+        ) : null}
+      </div>
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">Supply & demand</h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat label="Registered drivers" value={m.drivers} />
+          <Stat label="Registered hosts" value={m.hosts} />
+          <Stat label="Listings submitted / approved" value={`${m.listingsSubmitted} / ${m.listingsApproved}`} />
+          <Stat label="Active listings" value={m.listingsActive} />
+          <Stat label="Booking requests" value={m.bookingRequests} />
+          <Stat label="Completed sessions" value={m.completedSessions} />
+          <Stat label="Booking conversion" value={pct(m.conversionRate)} hint="Paid bookings ÷ booking requests" />
+          <Stat label="Repeat booking rate" value={pct(m.repeatRate)} hint="Drivers with 2+ paid bookings ÷ drivers with 1+" />
+          <Stat label="Cancellation rate" value={pct(m.cancellationRate)} />
+          <Stat label="Refund rate" value={pct(m.refundRate)} hint="Refunded ÷ gross booking value" />
+          <Stat label="Charger utilisation" value={pct(m.utilisation)} hint={m.utilisationNote} />
+        </div>
+      </section>
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">Money (kept separate on purpose)</h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat label="Gross booking value" value={formatINR(m.gbvPaise)} hint="Total paid by drivers" />
+          <Stat label="Platform commission" value={formatINR(m.commissionPaise)} hint="Gross, net of refund reversals" tone="volt" />
+          <Stat label="Net contribution (est.)" value={formatINR(m.netContributionPaise)} hint="Commission − est. GST − est. gateway fees" />
+          <Stat label="Refunds" value={formatINR(m.refundsPaise)} />
+          <Stat label="Est. GST on commission" value={formatINR(m.taxEstimatePaise)} hint="Estimate; confirm with a CA" />
+          <Stat label="Est. gateway fees" value={formatINR(m.processingFeeEstimatePaise)} hint="Replace with settlement data" />
+          <Stat label="Host payout liability" value={formatINR(m.payoutLiabilityPaise)} hint="Host share owed minus paid out" tone="warn" />
+        </div>
+        <Card className="mt-4 p-4 text-sm text-ink-600">
+          Commission is not profit. Net contribution here deducts only estimated GST and payment fees; it excludes refunds absorbed by the platform, support costs, insurance and marketing.
+        </Card>
+      </section>
+    </div>
+  );
+}

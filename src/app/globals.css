@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink-950: #050d1c;
+  --color-ink-900: #0a1730;
+  --color-ink-800: #12223f;
+  --color-ink-700: #1d3155;
+  --color-ink-600: #34496f;
+  --color-ink-500: #5b6b82;
+  --color-ink-400: #8392a8;
+  --color-ink-300: #b4bfcf;
+  --color-ink-200: #d7dee8;
+  --color-ink-100: #ebeff5;
+  --color-ink-50: #f5f7fa;
+
+  --color-volt-700: #077a76;
+  --color-volt-600: #0a9a94;
+  --color-volt-500: #0fb5ae;
+  --color-volt-400: #2fd3c9;
+  --color-volt-300: #7ce8e0;
+  --color-volt-100: #d8f7f4;
+  --color-volt-50: #eefbfa;
+
+  --color-go-600: #16a34a;
+  --color-go-500: #22c55e;
+  --color-go-100: #dcfce7;
+
+  --color-warn-600: #c2710c;
+  --color-warn-100: #fff1d6;
+  --color-stop-600: #d4343f;
+  --color-stop-100: #fde3e5;
+
+  --shadow-card: 0 1px 2px rgb(10 23 48 / 0.04), 0 4px 16px -4px rgb(10 23 48 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(10 23 48 / 0.06), 0 16px 40px -12px rgb(10 23 48 / 0.22);
+
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  @keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+  @keyframes pulse-ring {
+    0% { transform: scale(0.6); opacity: 0.7; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #fbfcfd;
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-volt-500);
+  outline-offset: 2px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-ink-100) 0, var(--color-ink-50) 40%, var(--color-ink-100) 80%);
+  background-size: 800px 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Leaflet price pins */
+.cs-pin {
+  background: var(--color-ink-900);
+  color: white;
+  font: 600 12px/1 var(--font-sans);
+  padding: 6px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgb(10 23 48 / 0.3);
+  border: 2px solid white;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cs-pin::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-volt-400);
+}
+.cs-pin.is-active {
+  background: var(--color-volt-500);
+  transform: translate(-50%, -50%) scale(1.12);
+}
+.cs-pin.is-active::before {
+  background: white;
+}
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: #e9eef3;
+}
